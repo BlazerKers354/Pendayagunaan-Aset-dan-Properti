@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}"
+    />
+    <title>Login | Telkom Aset Dashboard</title>
+  </head>
+
+  <body>
+    <div class="container" id="container">
+      {% with messages = get_flashed_messages(with_categories=true) %} {% if
+      messages %}
+      <div class="flash-container">
+        {% for category, message in messages %}
+        <div class="flash-message {{ category }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+      {% endif %} {% endwith %}
+
+      <!-- REGISTER FORM -->
+      <div class="form-container sign-up">
+        <form method="POST" action="{{ url_for('main.register') }}">
+          <h1>Buat Akun</h1>
+          <span>Gunakan email Anda untuk mendaftar</span>
+          <input type="text" name="name" placeholder="Nama" required />
+          <input type="email" name="email" placeholder="Email" required />
+          <input
+            type="password"
+            name="password"
+            placeholder="Password"
+            required
+          />
+          <button type="submit">Daftar</button>
+        </form>
+      </div>
+
+      <!-- LOGIN FORM -->
+      <div class="form-container sign-in">
+        <form method="POST" action="{{ url_for('main.login') }}">
+          <h1>Masuk</h1>
+          <span>Masukkan email dan password Anda</span>
+          <input type="email" name="email" placeholder="Email" required />
+          <input
+            type="password"
+            name="password"
+            placeholder="Password"
+            required
+          />
+          <button type="submit">Masuk</button>
+        </form>
+      </div>
+
+      <!-- TOGGLE PANEL -->
+      <div class="toggle-container">
+        <div class="toggle">
+          <div class="toggle-panel toggle-left">
+            <h1>Selamat Datang Kembali!</h1>
+            <p>Sudah punya akun? Silakan login.</p>
+            <button class="hidden" id="login">Masuk</button>
+          </div>
+          <div class="toggle-panel toggle-right">
+            <h1>Hai Teman Baru!</h1>
+            <p>Daftarkan dirimu untuk menggunakan sistem kami</p>
+            <button class="hidden" id="register">Daftar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/auth_script.js') }}"></script>
+  </body>
+</html>
