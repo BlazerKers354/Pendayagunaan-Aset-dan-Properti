@@ -1,8 +1,27 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
-from app import mysql  # ✅ JANGAN buat app baru di sini
+from app import mysql
+from .data_processor import AssetDataProcessor
 
 main = Blueprint('main', __name__)
+
+# Initialize data processor
+data_processor = AssetDataProcessor()
+
+@main.route('/')
+def index():
+    """Halaman utama - redirect ke dashboard jika sudah login, ke login jika belum"""
+    if 'user_id' in session:
+        if session.get('role') == 'admin':
+            return redirect('/admin/dashboard')
+        else:
+            return redirect('/pengguna/dashboard')
+    return redirect(url_for('main.login'))
+
+@main.route('/home')
+def home():
+    """Halaman home alternatif"""
+    return render_template('index.html')
 
 @main.route('/login', methods=['GET', 'POST'])
 def login():
@@ -11,13 +30,14 @@ def login():
         password = request.form['password']
 
         cur = mysql.connection.cursor()
-        cur.execute("SELECT id, password, role FROM users WHERE email = %s", (email,))
+        cur.execute("SELECT id, password, role, name FROM users WHERE email = %s", (email,))
         user = cur.fetchone()
         cur.close()
 
         if user and check_password_hash(user[1], password):
             session['user_id'] = user[0]
             session['role'] = user[2]
+            session['user_name'] = user[3]  # Simpan nama user di session
             return redirect('/admin/dashboard' if user[2] == 'admin' else '/pengguna/dashboard')
         else:
             flash('Email atau password salah.', 'error')
@@ -31,6 +51,10 @@ def register():
         name = request.form['name']
         email = request.form['email']
         password = request.form['password']
+        
+        # Registrasi selalu untuk role 'pengguna'
+        role = 'pengguna'
+        
         hashed_pw = generate_password_hash(password)
 
         cur = mysql.connection.cursor()
@@ -41,11 +65,281 @@ def register():
             return render_template('login_register.html')
 
         cur.execute("INSERT INTO users (name, email, password, role) VALUES (%s, %s, %s, %s)",
-                    (name, email, hashed_pw, 'pengguna'))
+                    (name, email, hashed_pw, role))
         mysql.connection.commit()
         cur.close()
 
-        flash('Registrasi berhasil! Silakan login.', 'success')
+        flash('Registrasi berhasil! Akun pengguna telah dibuat. Silakan login.', 'success')
         return redirect(url_for('main.login'))
 
     return render_template('login_register.html')
+
+@main.route('/admin/dashboard')
+def admin_dashboard():
+    """Dashboard untuk admin"""
+    if 'user_id' not in session or session.get('role') != 'admin':
+        flash('Akses ditolak. Silakan login sebagai admin.', 'error')
+        return redirect(url_for('main.login'))
+    
+    # Get detailed statistics for admin dashboard
+    try:
+        stats = data_processor.get_statistics()
+        location_prices = data_processor.get_price_by_location()
+        admin_stats = {
+            'total_properties': stats.get('total_properties', 0),
+            'avg_price': stats.get('avg_price', 0),
+            'min_price': stats.get('min_price', 0),
+            'max_price': stats.get('max_price', 0),
+            'avg_land_area': stats.get('avg_land_area', 0),
+            'avg_building_area': stats.get('avg_building_area', 0),
+            'total_locations': len(stats.get('locations', [])),
+            'locations': stats.get('locations', []),
+            'conditions': stats.get('conditions', []),
+            'certificates': stats.get('certificates', []),
+            'location_prices': location_prices
+        }
+    except Exception as e:
+        print(f"Error getting admin statistics: {e}")
+        admin_stats = {
+            'total_properties': 0,
+            'avg_price': 0,
+            'min_price': 0,
+            'max_price': 0,
+            'avg_land_area': 0,
+            'avg_building_area': 0,
+            'total_locations': 0,
+            'locations': [],
+            'conditions': [],
+            'certificates': [],
+            'location_prices': {}
+        }
+    
+    return render_template('dashboard_admin.html', stats=admin_stats)
+
+@main.route('/pengguna/dashboard')
+def user_dashboard():
+    """Dashboard untuk pengguna biasa"""
+    if 'user_id' not in session:
+        flash('Silakan login terlebih dahulu.', 'error')
+        return redirect(url_for('main.login'))
+    
+    # Ambil nama user dari database
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT name FROM users WHERE id = %s", (session['user_id'],))
+    user_data = cur.fetchone()
+    cur.close()
+    
+    user_name = user_data[0] if user_data else 'Pengguna'
+    session['user_name'] = user_name  # Simpan di session untuk digunakan di template
+    
+    # Get basic statistics for dashboard
+    try:
+        stats = data_processor.get_statistics()
+        dashboard_stats = {
+            'total_properties': stats.get('total_properties', 0),
+            'avg_price': stats.get('avg_price', 0),
+            'total_locations': len(stats.get('locations', [])),
+            'total_conditions': len(stats.get('conditions', []))
+        }
+    except Exception as e:
+        print(f"Error getting statistics: {e}")
+        dashboard_stats = {
+            'total_properties': 0,
+            'avg_price': 0,
+            'total_locations': 0,
+            'total_conditions': 0
+        }
+    
+    return render_template('dashboard_user.html', stats=dashboard_stats)
+
+@main.route('/logout')
+def logout():
+    """Logout user"""
+    session.clear()
+    flash('Anda telah berhasil logout.', 'success')
+    return redirect(url_for('main.login'))
+
+@main.route('/data')
+def data():
+    """Halaman data"""
+    if 'user_id' not in session:
+        flash('Silakan login terlebih dahulu.', 'error')
+        return redirect(url_for('main.login'))
+    return render_template('data.html')
+
+@main.route('/visualization')
+def visualization():
+    """Halaman visualisasi"""
+    if 'user_id' not in session:
+        flash('Silakan login terlebih dahulu.', 'error')
+        return redirect(url_for('main.login'))
+    return render_template('visualization.html')
+
+@main.route('/prediction')
+def prediction():
+    """Halaman prediksi"""
+    if 'user_id' not in session:
+        flash('Silakan login terlebih dahulu.', 'error')
+        return redirect(url_for('main.login'))
+    
+    # Get dataset insights for prediction reference
+    try:
+        stats = data_processor.get_statistics()
+        prediction_data = {
+            'avg_price': stats.get('avg_price', 0),
+            'min_price': stats.get('min_price', 0),
+            'max_price': stats.get('max_price', 0),
+            'avg_land_area': stats.get('avg_land_area', 0),
+            'avg_building_area': stats.get('avg_building_area', 0),
+            'locations': stats.get('locations', [])[:10]  # Show top 10 locations
+        }
+    except Exception as e:
+        print(f"Error getting prediction data: {e}")
+        prediction_data = {
+            'avg_price': 0,
+            'min_price': 0,
+            'max_price': 0,
+            'avg_land_area': 0,
+            'avg_building_area': 0,
+            'locations': []
+        }
+    
+    return render_template('prediction.html', prediction_data=prediction_data)
+
+@main.route('/api/data/real', methods=['GET'])
+def api_get_real_data():
+    """API endpoint untuk mendapatkan data real"""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    # Ganti dengan logika untuk mengambil data real sesuai kebutuhan
+    real_data = data_processor.get_real_data()
+    
+    return jsonify(real_data), 200
+
+@main.route('/api/data/real/<int:data_id>', methods=['GET'])
+def api_get_real_data_by_id(data_id):
+    """API endpoint untuk mendapatkan data real berdasarkan ID"""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    # Ganti dengan logika untuk mengambil data real berdasarkan ID
+    real_data = data_processor.get_real_data_by_id(data_id)
+    
+    if real_data is None:
+        return jsonify({'error': 'Data not found'}), 404
+    
+    return jsonify(real_data), 200
+
+@main.route('/api/data/real', methods=['POST'])
+def api_post_real_data():
+    """API endpoint untuk menambahkan data real"""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    # Ganti dengan logika untuk menambahkan data real sesuai kebutuhan
+    data_processor.add_real_data(request.json)
+    
+    return jsonify({'message': 'Data added successfully'}), 201
+
+@main.route('/api/data/real/<int:data_id>', methods=['PUT'])
+def api_put_real_data(data_id):
+    """API endpoint untuk mengupdate data real"""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    # Ganti dengan logika untuk mengupdate data real sesuai kebutuhan
+    data_processor.update_real_data(data_id, request.json)
+    
+    return jsonify({'message': 'Data updated successfully'}), 200
+
+@main.route('/api/data/real/<int:data_id>', methods=['DELETE'])
+def api_delete_real_data(data_id):
+    """API endpoint untuk menghapus data real"""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    # Ganti dengan logika untuk menghapus data real sesuai kebutuhan
+    data_processor.delete_real_data(data_id)
+    
+    return jsonify({'message': 'Data deleted successfully'}), 200
+
+@main.route('/api/properties')
+def api_properties():
+    """API endpoint to get property data"""
+    try:
+        # Get query parameters
+        page = int(request.args.get('page', 1))
+        per_page = int(request.args.get('per_page', 12))
+        location = request.args.get('location', '')
+        min_price = request.args.get('min_price', '')
+        max_price = request.args.get('max_price', '')
+        bedrooms = request.args.get('bedrooms', '')
+        condition = request.args.get('condition', '')
+
+        # Build filters
+        filters = {}
+        if location:
+            filters['location'] = location
+        if min_price:
+            filters['min_price'] = int(min_price)
+        if max_price:
+            filters['max_price'] = int(max_price)
+        if bedrooms:
+            filters['bedrooms'] = int(bedrooms)
+        if condition:
+            filters['condition'] = condition
+
+        # Get filtered properties
+        all_properties = data_processor.get_filtered_properties(filters)
+        
+        # Calculate pagination
+        total = len(all_properties)
+        start = (page - 1) * per_page
+        end = start + per_page
+        properties = all_properties[start:end]
+
+        return jsonify({
+            'properties': properties,
+            'total': total,
+            'page': page,
+            'per_page': per_page,
+            'total_pages': (total + per_page - 1) // per_page
+        })
+    
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@main.route('/api/property/<int:property_id>')
+def api_property_detail(property_id):
+    """API endpoint to get specific property details"""
+    try:
+        property_data = data_processor.get_property_by_id(property_id)
+        if property_data:
+            return jsonify(property_data)
+        else:
+            return jsonify({'error': 'Property not found'}), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@main.route('/api/statistics')
+def api_statistics():
+    """API endpoint to get dataset statistics"""
+    try:
+        stats = data_processor.get_statistics()
+        location_prices = data_processor.get_price_by_location()
+        stats['location_prices'] = location_prices
+        return jsonify(stats)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@main.route('/api/locations')
+def api_locations():
+    """API endpoint to get available locations"""
+    try:
+        stats = data_processor.get_statistics()
+        return jsonify({
+            'locations': stats.get('locations', [])
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500

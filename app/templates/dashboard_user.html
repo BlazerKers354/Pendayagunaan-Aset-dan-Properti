@@ -1,3 +1,443 @@
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-<h1>Halo Pengguna {{ username }}</h1>
-<a href="{{ url_for('logout') }}">Logout</a>
+  {% extends "layout.html" %}
+
+{% block title %}Dashboard Pengguna - Pendayagunaan Aset{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- Header Dashboard -->
+    <div class="dashboard-header">
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="dashboard-title">
+                        <i class="fas fa-tachometer-alt me-3"></i>
+                        Dashboard Pengguna
+                    </h1>
+                    <p class="dashboard-subtitle">Selamat datang di sistem pendayagunaan aset dan properti</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <div class="user-info">
+                        <span class="user-welcome">Halo, {{ session.get('user_name', 'Pengguna') }}!</span>
+                        <a href="{{ url_for('main.logout') }}" class="btn btn-outline-danger btn-sm ms-2">
+                            <i class="fas fa-sign-out-alt me-1"></i>Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="dashboard-content">
+        <div class="container-fluid">
+            <!-- Asset Selection Card -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="asset-selection-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-building me-2"></i>Pilih Jenis Aset</h3>
+                            <p>Silakan pilih jenis aset yang ingin Anda sewa/beli</p>
+                        </div>
+                        <div class="card-body">
+                            <div class="asset-dropdown-container">
+                                <select id="assetTypeSelect" class="form-select asset-select">
+                                    <option value="">-- Pilih Jenis Aset --</option>
+                                    <option value="tanah">🌍 Tanah</option>
+                                    <option value="tanah_bangunan">🏢 Tanah & Bangunan</option>
+                                </select>
+                                <button id="selectAssetBtn" class="btn btn-primary asset-btn" disabled>
+                                    <i class="fas fa-arrow-right me-2"></i>Lanjutkan
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dataset Statistics -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="stats-overview">
+                        <h3><i class="fas fa-chart-bar me-2"></i>Statistik Dataset Properti</h3>
+                        <div class="row">
+                            <div class="col-md-3 mb-3">
+                                <div class="stat-card">
+                                    <div class="stat-number">{{ "{:,}".format(stats.total_properties) }}</div>
+                                    <div class="stat-label">Total Properti</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="stat-card">
+                                    <div class="stat-number">Rp {{ "{:,.0f}".format(stats.avg_price/1000000) }}M</div>
+                                    <div class="stat-label">Harga Rata-rata</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="stat-card">
+                                    <div class="stat-number">{{ stats.total_locations }}</div>
+                                    <div class="stat-label">Kecamatan</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="stat-card">
+                                    <div class="stat-number">{{ stats.total_conditions }}</div>
+                                    <div class="stat-label">Kondisi Properti</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Asset Info Cards -->
+            <div class="row justify-content-center">
+                <div class="col-md-5 mb-4">
+                    <div class="info-card tanah-card">
+                        <div class="card-icon">
+                            <i class="fas fa-map"></i>
+                        </div>
+                        <div class="card-content">
+                            <h4>Tanah</h4>
+                            <p>Sewa atau beli lahan kosong untuk berbagai keperluan bisnis dan investasi</p>
+                            <ul class="feature-list">
+                                <li>Lahan pertanian dan perkebunan</li>
+                                <li>Area pengembangan komersial</li>
+                                <li>Investasi jangka panjang</li>
+                                <li>Sewa bulanan atau tahunan</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-5 mb-4">
+                    <div class="info-card bangunan-card">
+                        <div class="card-icon">
+                            <i class="fas fa-building"></i>
+                        </div>
+                        <div class="card-content">
+                            <h4>Tanah & Bangunan</h4>
+                            <p>Sewa atau beli paket lengkap tanah dengan bangunan siap pakai</p>
+                            <ul class="feature-list">
+                                <li>Gedung perkantoran dan retail</li>
+                                <li>Warehouse dan gudang</li>
+                                <li>Fasilitas produksi</li>
+                                <li>Kontrak sewa fleksibel</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+<!-- Asset Selection Modal -->
+<div class="modal fade" id="assetModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Konfirmasi Pilihan Aset</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Anda memilih jenis aset: <strong id="selectedAssetType"></strong></p>
+                <p>Sistem akan menampilkan data dan fitur yang sesuai dengan jenis aset ini.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-primary" id="confirmAssetBtn">Konfirmasi</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.dashboard-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.dashboard-header {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    padding: 20px 0;
+    margin-bottom: 30px;
+    box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+}
+
+.dashboard-title {
+    color: #333;
+    font-weight: 700;
+    margin: 0;
+}
+
+.dashboard-subtitle {
+    color: #666;
+    margin: 5px 0 0 0;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+}
+
+.user-welcome {
+    color: #333;
+    font-weight: 500;
+}
+
+.asset-selection-card {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.asset-selection-card .card-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 25px;
+    text-align: center;
+}
+
+.asset-selection-card .card-header h3 {
+    margin: 0 0 10px 0;
+    font-size: 1.5rem;
+}
+
+.asset-selection-card .card-body {
+    padding: 30px;
+}
+
+.asset-dropdown-container {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.asset-select {
+    flex: 1;
+    padding: 12px 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.asset-select:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+.asset-btn {
+    padding: 12px 25px;
+    border-radius: 10px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.asset-btn:enabled:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+/* Statistics Overview Styles */
+.stats-overview {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+.stats-overview h3 {
+    color: #333;
+    margin-bottom: 20px;
+    text-align: center;
+    font-weight: 600;
+}
+
+.stat-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+}
+
+.stat-number {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    opacity: 0.9;
+    font-weight: 500;
+}
+
+.info-card {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    height: 100%;
+}
+
+.info-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+}
+
+.card-icon {
+    font-size: 3rem;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.tanah-card .card-icon { color: #4CAF50; }
+.bangunan-card .card-icon { color: #FF9800; }
+
+.card-content h4 {
+    color: #333;
+    margin-bottom: 15px;
+    text-align: center;
+    font-weight: 600;
+}
+
+.card-content p {
+    color: #666;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.feature-list {
+    list-style: none;
+    padding: 0;
+}
+
+.feature-list li {
+    padding: 5px 0;
+    color: #555;
+    position: relative;
+    padding-left: 20px;
+}
+
+.feature-list li:before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    color: #4CAF50;
+    font-weight: bold;
+}
+
+.quick-actions-card {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.quick-actions-card h3 {
+    color: #333;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 20px;
+}
+
+.action-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    text-decoration: none;
+    color: #333;
+    transition: all 0.3s ease;
+}
+
+.action-item:hover {
+    background: #667eea;
+    color: white;
+    transform: translateY(-3px);
+    text-decoration: none;
+}
+
+.action-item i {
+    font-size: 2rem;
+    margin-bottom: 10px;
+}
+
+@media (max-width: 768px) {
+    .asset-dropdown-container {
+        flex-direction: column;
+    }
+    
+    .actions-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const assetSelect = document.getElementById('assetTypeSelect');
+    const selectBtn = document.getElementById('selectAssetBtn');
+    const modal = new bootstrap.Modal(document.getElementById('assetModal'));
+    const selectedAssetType = document.getElementById('selectedAssetType');
+    const confirmBtn = document.getElementById('confirmAssetBtn');
+    
+    // Enable/disable button based on selection
+    assetSelect.addEventListener('change', function() {
+        if (this.value) {
+            selectBtn.disabled = false;
+            selectBtn.classList.add('btn-primary');
+            selectBtn.classList.remove('btn-secondary');
+        } else {
+            selectBtn.disabled = true;
+            selectBtn.classList.add('btn-secondary');
+            selectBtn.classList.remove('btn-primary');
+        }
+    });
+    
+    // Show modal when button clicked
+    selectBtn.addEventListener('click', function() {
+        const selected = assetSelect.options[assetSelect.selectedIndex].text;
+        selectedAssetType.textContent = selected;
+        modal.show();
+    });
+    
+    // Handle confirmation
+    confirmBtn.addEventListener('click', function() {
+        const assetType = assetSelect.value;
+        // Redirect to specific pages based on asset type
+        switch(assetType) {
+            case 'tanah':
+                window.location.href = '{{ url_for("main.data") }}?type=tanah';
+                break;
+            case 'tanah_bangunan':
+                window.location.href = '{{ url_for("main.data") }}?type=tanah_bangunan';
+                break;
+            default:
+                window.location.href = '{{ url_for("main.data") }}';
+        }
+        modal.hide();
+    });
+});
+</script>
+{% endblock %}
