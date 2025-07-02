@@ -7,7 +7,7 @@ class AssetDataProcessor:
     def __init__(self, csv_path: str = None):
         """Initialize the processor with CSV data"""
         if csv_path is None:
-            csv_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'raw', 'dataset_aset.csv')
+            csv_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'raw', 'Dataset_Bangunan_Surabaya.csv')
         
         self.csv_path = csv_path
         self.df = None
@@ -16,8 +16,8 @@ class AssetDataProcessor:
     def load_data(self):
         """Load and clean the CSV data"""
         try:
-            # Read CSV with semicolon separator
-            self.df = pd.read_csv(self.csv_path, sep=';', encoding='utf-8')
+            # Read CSV with comma separator
+            self.df = pd.read_csv(self.csv_path, sep=',', encoding='utf-8')
             
             # Clean column names (remove spaces)
             self.df.columns = self.df.columns.str.strip()
@@ -34,7 +34,8 @@ class AssetDataProcessor:
             
             # Clean string columns
             string_columns = ['Kecamatan', 'Sertifikat', 'Ruang Makan', 'Ruang Tamu', 'Kondisi Perabotan', 
-                            'Hadap', 'Terjangkau Internet', 'Lebar Jalan', 'Sumber Air', 'Hook', 'Kondisi Properti']
+                            'Hadap', 'Terjangkau Internet', 'Lebar Jalan', 'Sumber Air', 'Hook', 'Kondisi Properti',
+                            'Alamat', 'Tipe Iklan']
             for col in string_columns:
                 if col in self.df.columns:
                     self.df[col] = self.df[col].astype(str).str.strip()
@@ -54,6 +55,7 @@ class AssetDataProcessor:
     
     def create_dummy_data(self):
         """Create dummy data if CSV loading fails"""
+        # Create 500 rows of dummy data with consistent array lengths
         dummy_data = {
             'Kecamatan': ['wonokromo', 'rungkut', 'semampir', 'pakal', 'gayungan'] * 100,
             'Price': [600000000, 650000000, 700000000, 750000000, 800000000] * 100,
@@ -62,7 +64,10 @@ class AssetDataProcessor:
             'Luas Tanah': [60, 72, 80, 90, 65] * 100,
             'Luas Bangunan': [50, 65, 70, 80, 55] * 100,
             'Sertifikat': ['SHM - Sertifikat Hak Milik'] * 500,
-            'Kondisi Properti': ['Baru', 'Bagus', 'Sudah Renovasi'] * 167
+            'Kondisi Properti': ['Baru', 'Bagus', 'Sudah Renovasi', 'Baru', 'Bagus'] * 100,
+            'Daya Listrik': [1300, 2200, 1300, 2200, 1300] * 100,
+            'Alamat': ['Jl. Test No.1, Surabaya'] * 500,
+            'Tipe Iklan': ['Dijual', 'Disewa', 'Keduanya', 'Dijual', 'Disewa'] * 100
         }
         self.df = pd.DataFrame(dummy_data)
     
@@ -94,8 +99,10 @@ class AssetDataProcessor:
                 'road_width': row['Lebar Jalan'] if pd.notna(row['Lebar Jalan']) else 'N/A',
                 'water_source': row['Sumber Air'] if pd.notna(row['Sumber Air']) else 'N/A',
                 'hook': row['Hook'] if pd.notna(row['Hook']) else 'N/A',
+                'address': row['Alamat'] if pd.notna(row['Alamat']) else 'N/A',
+                'ad_type': row['Tipe Iklan'] if pd.notna(row['Tipe Iklan']) else 'N/A',
                 'type': 'Rumah',
-                'transaction_type': 'Jual'  # Assuming all are for sale based on the price data
+                'transaction_type': row['Tipe Iklan'] if pd.notna(row['Tipe Iklan']) else 'Jual'
             }
             
             # Calculate price per m2
@@ -147,6 +154,12 @@ class AssetDataProcessor:
                 filtered_df = filtered_df[
                     filtered_df['Kondisi Properti'].str.lower().str.contains(filters['condition'].lower(), na=False)
                 ]
+            
+            # Filter by transaction type
+            if filters.get('transaction_type'):
+                filtered_df = filtered_df[
+                    filtered_df['Tipe Iklan'].str.lower().str.contains(filters['transaction_type'].lower(), na=False)
+                ]
         
         # Convert to list format
         properties = []
@@ -172,8 +185,10 @@ class AssetDataProcessor:
                 'road_width': row['Lebar Jalan'] if pd.notna(row['Lebar Jalan']) else 'N/A',
                 'water_source': row['Sumber Air'] if pd.notna(row['Sumber Air']) else 'N/A',
                 'hook': row['Hook'] if pd.notna(row['Hook']) else 'N/A',
+                'address': row['Alamat'] if pd.notna(row['Alamat']) else 'N/A',
+                'ad_type': row['Tipe Iklan'] if pd.notna(row['Tipe Iklan']) else 'N/A',
                 'type': 'Rumah',
-                'transaction_type': 'Jual'
+                'transaction_type': row['Tipe Iklan'] if pd.notna(row['Tipe Iklan']) else 'Jual'
             }
             
             # Calculate price per m2
@@ -250,8 +265,10 @@ class AssetDataProcessor:
                 'hook': row['Hook'] if pd.notna(row['Hook']) else 'N/A',
                 'dining_room': row['Ruang Makan'] if pd.notna(row['Ruang Makan']) else 'N/A',
                 'living_room': row['Ruang Tamu'] if pd.notna(row['Ruang Tamu']) else 'N/A',
+                'address': row['Alamat'] if pd.notna(row['Alamat']) else 'N/A',
+                'ad_type': row['Tipe Iklan'] if pd.notna(row['Tipe Iklan']) else 'N/A',
                 'type': 'Rumah',
-                'transaction_type': 'Jual'
+                'transaction_type': row['Tipe Iklan'] if pd.notna(row['Tipe Iklan']) else 'Jual'
             }
             
             # Calculate price per m2
