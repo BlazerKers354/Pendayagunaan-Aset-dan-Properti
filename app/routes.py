@@ -1,8 +1,23 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from werkzeug.security import generate_password_hash, check_password_hash
-from app import mysql  # ✅ JANGAN buat app baru di sini
+from app import mysql
 
 main = Blueprint('main', __name__)
+
+
+@main.route('/')
+def home():
+    return redirect(url_for('main.login'))
+
+
+@main.route('/admin/dashboard')
+def dashboard_admin():
+    if 'user_id' not in session or session.get('role') != 'admin':
+        flash('Silakan login sebagai admin.', 'error')
+        return redirect(url_for('main.login'))
+    return render_template('dashboard_admin.html')
+
+
 
 @main.route('/login', methods=['GET', 'POST'])
 def login():
@@ -16,11 +31,18 @@ def login():
         cur.close()
 
         if user and check_password_hash(user[1], password):
+            if user[2] != 'admin':
+                flash('Hanya admin yang dapat login saat ini.', 'error')
+                return render_template('login_register.html')
+
+            # Simpan session dan redirect ke dashboard admin
             session['user_id'] = user[0]
             session['role'] = user[2]
-            return redirect('/admin/dashboard' if user[2] == 'admin' else '/pengguna/dashboard')
+            flash('Login admin berhasil.', 'success')
+            return redirect(url_for('main.dashboard_admin'))
         else:
             flash('Email atau password salah.', 'error')
+            return render_template('login_register.html')
 
     return render_template('login_register.html')
 
@@ -49,3 +71,10 @@ def register():
         return redirect(url_for('main.login'))
 
     return render_template('login_register.html')
+
+@main.route('/logout')
+def logout():
+    session.clear()
+    flash('Anda telah logout.', 'success')
+    return redirect(url_for('main.login'))
+
