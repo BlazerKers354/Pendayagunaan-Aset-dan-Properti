@@ -236,3 +236,53 @@ body{
     background-color: #ffcdd2;
     color: #c62828;
 }
+
+/* Telkom Logo Styling */
+.logo-container {
+    position: absolute;
+    top: 15px;
+    z-index: 5;
+    transition: opacity 0.6s ease-in-out;
+}
+
+.logo-left {
+    left: 15px;
+}
+
+.logo-right {
+    right: 15px;
+}
+
+.telkom-logo {
+    width: 60px;
+    height: auto;
+    opacity: 0.8;
+    transition: opacity 0.3s ease;
+}
+
+.telkom-logo:hover {
+    opacity: 1;
+}
+
+/* Hide logos when form is not active */
+.sign-in .logo-container {
+    opacity: 1;
+}
+
+.sign-up .logo-container {
+    opacity: 0;
+}
+
+.container.active .sign-in .logo-container {
+    opacity: 0;
+}
+
+.container.active .sign-up .logo-container {
+    opacity: 1;
+}
+
+/* Additional styling for form containers to accommodate logos */
+.form-container {
+    padding-top: 80px;
+    overflow: hidden;
+}
