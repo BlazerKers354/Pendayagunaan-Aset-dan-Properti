@@ -22,12 +22,20 @@ class AssetDataProcessor:
             # Clean column names (remove spaces)
             self.df.columns = self.df.columns.str.strip()
             
-            # Clean price column - remove spaces and convert to numeric
-            self.df['Price'] = self.df['Price'].astype(str).str.replace('.', '').str.replace(' ', '').str.replace(',', '')
-            self.df['Price'] = pd.to_numeric(self.df['Price'], errors='coerce')
+            # Create Price column from NJOP and land area if it doesn't exist
+            if 'Price' not in self.df.columns and 'NJOP_Rp_per_m2' in self.df.columns and 'Luas Tanah' in self.df.columns:
+                self.df['Price'] = self.df['NJOP_Rp_per_m2'] * self.df['Luas Tanah']
+            
+            # Clean price column if it exists
+            if 'Price' in self.df.columns:
+                self.df['Price'] = self.df['Price'].astype(str).str.replace('.', '').str.replace(' ', '').str.replace(',', '')
+                self.df['Price'] = pd.to_numeric(self.df['Price'], errors='coerce')
+            else:
+                # If no price data, create dummy prices
+                self.df['Price'] = 1000000000  # 1 billion default
             
             # Clean numeric columns
-            numeric_columns = ['Kamar Tidur', 'Kamar Mandi', 'Luas Tanah', 'Luas Bangunan', 'Daya Listrik', 'Jumlah Lantai']
+            numeric_columns = ['Kamar Tidur', 'Kamar Mandi', 'Luas Tanah', 'Luas Bangunan', 'Daya Listrik', 'Jumlah Lantai', 'NJOP_Rp_per_m2']
             for col in numeric_columns:
                 if col in self.df.columns:
                     self.df[col] = pd.to_numeric(self.df[col], errors='coerce')
@@ -35,16 +43,17 @@ class AssetDataProcessor:
             # Clean string columns
             string_columns = ['Kecamatan', 'Sertifikat', 'Ruang Makan', 'Ruang Tamu', 'Kondisi Perabotan', 
                             'Hadap', 'Terjangkau Internet', 'Lebar Jalan', 'Sumber Air', 'Hook', 'Kondisi Properti',
-                            'Alamat', 'Tipe Iklan']
+                            'Alamat', 'Tipe Iklan', 'Aksesibilitas', 'Tingkat_Keamanan']
             for col in string_columns:
                 if col in self.df.columns:
                     self.df[col] = self.df[col].astype(str).str.strip()
                     # Replace 'nan' with empty string for better handling
                     self.df[col] = self.df[col].replace('nan', '')
             
-            # Remove rows with invalid prices
-            self.df = self.df.dropna(subset=['Price'])
-            self.df = self.df[self.df['Price'] > 0]
+            # Remove rows with invalid prices (only if Price column exists)
+            if 'Price' in self.df.columns:
+                self.df = self.df.dropna(subset=['Price'])
+                self.df = self.df[self.df['Price'] > 0]
             
             print(f"Loaded {len(self.df)} records from dataset")
             
@@ -206,11 +215,19 @@ class AssetDataProcessor:
         if self.df is None or self.df.empty:
             return {}
         
+        # Check if Price column exists, if not create default values
+        if 'Price' not in self.df.columns:
+            avg_price = min_price = max_price = 0
+        else:
+            avg_price = int(self.df['Price'].mean())
+            min_price = int(self.df['Price'].min())
+            max_price = int(self.df['Price'].max())
+        
         stats = {
             'total_properties': len(self.df),
-            'avg_price': int(self.df['Price'].mean()),
-            'min_price': int(self.df['Price'].min()),
-            'max_price': int(self.df['Price'].max()),
+            'avg_price': avg_price,
+            'min_price': min_price,
+            'max_price': max_price,
             'avg_land_area': int(self.df['Luas Tanah'].mean()) if 'Luas Tanah' in self.df.columns else 0,
             'avg_building_area': int(self.df['Luas Bangunan'].mean()) if 'Luas Bangunan' in self.df.columns else 0,
             'locations': list(self.df['Kecamatan'].str.title().unique()),
@@ -224,6 +241,18 @@ class AssetDataProcessor:
         """Get average prices by location"""
         if self.df is None or self.df.empty:
             return {}
+        
+        # Check if Price column exists
+        if 'Price' not in self.df.columns:
+            # Return basic location count without prices
+            location_counts = self.df.groupby('Kecamatan').size()
+            result = {}
+            for location, count in location_counts.items():
+                result[location.title()] = {
+                    'avg_price': 0,
+                    'count': int(count)
+                }
+            return result
         
         location_prices = self.df.groupby('Kecamatan')['Price'].agg(['mean', 'count']).round(0)
         location_prices.columns = ['avg_price', 'count']
