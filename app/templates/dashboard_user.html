@@ -54,41 +54,6 @@
                 </div>
             </div>
 
-            <!-- Dataset Statistics -->
-            <div class="row mb-4">
-                <div class="col-12">
-                    <div class="stats-overview">
-                        <h3><i class="fas fa-chart-bar me-2"></i>Statistik Dataset Properti</h3>
-                        <div class="row">
-                            <div class="col-md-3 mb-3">
-                                <div class="stat-card">
-                                    <div class="stat-number">{{ "{:,}".format(stats.total_properties) }}</div>
-                                    <div class="stat-label">Total Properti</div>
-                                </div>
-                            </div>
-                            <div class="col-md-3 mb-3">
-                                <div class="stat-card">
-                                    <div class="stat-number">Rp {{ "{:,.0f}".format(stats.avg_price/1000000) }}M</div>
-                                    <div class="stat-label">Harga Rata-rata</div>
-                                </div>
-                            </div>
-                            <div class="col-md-3 mb-3">
-                                <div class="stat-card">
-                                    <div class="stat-number">{{ stats.total_locations }}</div>
-                                    <div class="stat-label">Kecamatan</div>
-                                </div>
-                            </div>
-                            <div class="col-md-3 mb-3">
-                                <div class="stat-card">
-                                    <div class="stat-number">{{ stats.total_conditions }}</div>
-                                    <div class="stat-label">Kondisi Properti</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             <!-- Asset Info Cards -->
             <div class="row justify-content-center">
                 <div class="col-md-5 mb-4">
@@ -238,50 +203,6 @@
 .asset-btn:enabled:hover {
     transform: translateY(-2px);
     box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-}
-
-/* Statistics Overview Styles */
-.stats-overview {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
-    border-radius: 15px;
-    padding: 25px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-    margin-bottom: 20px;
-}
-
-.stats-overview h3 {
-    color: #333;
-    margin-bottom: 20px;
-    text-align: center;
-    font-weight: 600;
-}
-
-.stat-card {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border-radius: 12px;
-    padding: 20px;
-    text-align: center;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-    transition: all 0.3s ease;
-}
-
-.stat-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-}
-
-.stat-number {
-    font-size: 1.8rem;
-    font-weight: 700;
-    margin-bottom: 5px;
-}
-
-.stat-label {
-    font-size: 0.9rem;
-    opacity: 0.9;
-    font-weight: 500;
 }
 
 .info-card {
