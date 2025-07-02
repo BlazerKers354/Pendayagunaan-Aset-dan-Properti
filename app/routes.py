@@ -1,18 +1,13 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify, current_app
 from werkzeug.security import generate_password_hash, check_password_hash
 from .data_processor import AssetDataProcessor
-import sqlite3
+from .models import User
+import mysql.connector
 
 main = Blueprint('main', __name__)
 
 # Initialize data processor
 data_processor = AssetDataProcessor()
-
-def get_db_connection():
-    """Get database connection"""
-    conn = sqlite3.connect(current_app.config['DATABASE'])
-    conn.row_factory = sqlite3.Row
-    return conn
 
 @main.route('/')
 def index():
@@ -35,17 +30,18 @@ def login():
         email = request.form['email']
         password = request.form['password']
 
-        conn = get_db_connection()
-        user = conn.execute("SELECT id, password, role, name FROM users WHERE email = ?", (email,)).fetchone()
-        conn.close()
-
-        if user and check_password_hash(user['password'], password):
-            session['user_id'] = user['id']
-            session['role'] = user['role']
-            session['user_name'] = user['name']  # Simpan nama user di session
-            return redirect('/admin/dashboard' if user['role'] == 'admin' else '/pengguna/dashboard')
-        else:
-            flash('Email atau password salah.', 'error')
+        try:
+            user = User.find_by_email(email)
+            
+            if user and user.check_password(password):
+                session['user_id'] = user.id
+                session['role'] = user.role
+                session['user_name'] = user.name  # Simpan nama user di session
+                return redirect('/admin/dashboard' if user.role == 'admin' else '/pengguna/dashboard')
+            else:
+                flash('Email atau password salah.', 'error')
+        except Exception as e:
+            flash(f'Database error: {str(e)}', 'error')
 
     return render_template('login_register.html')
 
@@ -59,23 +55,29 @@ def register():
         
         # Registrasi selalu untuk role 'pengguna'
         role = 'pengguna'
-        
-        hashed_pw = generate_password_hash(password)
 
-        conn = get_db_connection()
-        existing_user = conn.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
-        if existing_user:
-            flash('Email sudah digunakan.', 'error')
-            conn.close()
+        try:
+            # Check if email already exists
+            existing_user = User.find_by_email(email)
+            
+            if existing_user:
+                flash('Email sudah digunakan.', 'error')
+                return render_template('login_register.html')
+
+            # Create new user
+            new_user = User(name=name, email=email, role=role)
+            new_user.set_password(password)
+            
+            if new_user.save():
+                flash('Registrasi berhasil! Akun pengguna telah dibuat. Silakan login.', 'success')
+                return redirect(url_for('main.login'))
+            else:
+                flash('Terjadi kesalahan saat membuat akun. Silakan coba lagi.', 'error')
+                return render_template('login_register.html')
+            
+        except Exception as e:
+            flash(f'Database error: {str(e)}', 'error')
             return render_template('login_register.html')
-
-        conn.execute("INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)",
-                    (name, email, hashed_pw, role))
-        conn.commit()
-        conn.close()
-
-        flash('Registrasi berhasil! Akun pengguna telah dibuat. Silakan login.', 'success')
-        return redirect(url_for('main.login'))
 
     return render_template('login_register.html')
 
@@ -129,11 +131,8 @@ def user_dashboard():
         return redirect(url_for('main.login'))
     
     # Ambil nama user dari database
-    conn = get_db_connection()
-    user_data = conn.execute("SELECT name FROM users WHERE id = ?", (session['user_id'],)).fetchone()
-    conn.close()
-    
-    user_name = user_data['name'] if user_data else 'Pengguna'
+    user = User.find_by_id(session['user_id'])
+    user_name = user.name if user else 'Pengguna'
     session['user_name'] = user_name  # Simpan di session untuk digunakan di template
     
     # Get basic statistics for dashboard
