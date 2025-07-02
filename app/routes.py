@@ -1,12 +1,18 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify, current_app
 from werkzeug.security import generate_password_hash, check_password_hash
-from app import mysql
 from .data_processor import AssetDataProcessor
+import sqlite3
 
 main = Blueprint('main', __name__)
 
 # Initialize data processor
 data_processor = AssetDataProcessor()
+
+def get_db_connection():
+    """Get database connection"""
+    conn = sqlite3.connect(current_app.config['DATABASE'])
+    conn.row_factory = sqlite3.Row
+    return conn
 
 @main.route('/')
 def index():
@@ -29,16 +35,15 @@ def login():
         email = request.form['email']
         password = request.form['password']
 
-        cur = mysql.connection.cursor()
-        cur.execute("SELECT id, password, role, name FROM users WHERE email = %s", (email,))
-        user = cur.fetchone()
-        cur.close()
+        conn = get_db_connection()
+        user = conn.execute("SELECT id, password, role, name FROM users WHERE email = ?", (email,)).fetchone()
+        conn.close()
 
-        if user and check_password_hash(user[1], password):
-            session['user_id'] = user[0]
-            session['role'] = user[2]
-            session['user_name'] = user[3]  # Simpan nama user di session
-            return redirect('/admin/dashboard' if user[2] == 'admin' else '/pengguna/dashboard')
+        if user and check_password_hash(user['password'], password):
+            session['user_id'] = user['id']
+            session['role'] = user['role']
+            session['user_name'] = user['name']  # Simpan nama user di session
+            return redirect('/admin/dashboard' if user['role'] == 'admin' else '/pengguna/dashboard')
         else:
             flash('Email atau password salah.', 'error')
 
@@ -57,17 +62,17 @@ def register():
         
         hashed_pw = generate_password_hash(password)
 
-        cur = mysql.connection.cursor()
-        cur.execute("SELECT * FROM users WHERE email = %s", (email,))
-        if cur.fetchone():
+        conn = get_db_connection()
+        existing_user = conn.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
+        if existing_user:
             flash('Email sudah digunakan.', 'error')
-            cur.close()
+            conn.close()
             return render_template('login_register.html')
 
-        cur.execute("INSERT INTO users (name, email, password, role) VALUES (%s, %s, %s, %s)",
+        conn.execute("INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)",
                     (name, email, hashed_pw, role))
-        mysql.connection.commit()
-        cur.close()
+        conn.commit()
+        conn.close()
 
         flash('Registrasi berhasil! Akun pengguna telah dibuat. Silakan login.', 'success')
         return redirect(url_for('main.login'))
@@ -124,12 +129,11 @@ def user_dashboard():
         return redirect(url_for('main.login'))
     
     # Ambil nama user dari database
-    cur = mysql.connection.cursor()
-    cur.execute("SELECT name FROM users WHERE id = %s", (session['user_id'],))
-    user_data = cur.fetchone()
-    cur.close()
+    conn = get_db_connection()
+    user_data = conn.execute("SELECT name FROM users WHERE id = ?", (session['user_id'],)).fetchone()
+    conn.close()
     
-    user_name = user_data[0] if user_data else 'Pengguna'
+    user_name = user_data['name'] if user_data else 'Pengguna'
     session['user_name'] = user_name  # Simpan di session untuk digunakan di template
     
     # Get basic statistics for dashboard
@@ -206,64 +210,6 @@ def prediction():
     
     return render_template('prediction.html', prediction_data=prediction_data)
 
-@main.route('/api/data/real', methods=['GET'])
-def api_get_real_data():
-    """API endpoint untuk mendapatkan data real"""
-    if 'user_id' not in session:
-        return jsonify({'error': 'Unauthorized'}), 401
-    
-    # Ganti dengan logika untuk mengambil data real sesuai kebutuhan
-    real_data = data_processor.get_real_data()
-    
-    return jsonify(real_data), 200
-
-@main.route('/api/data/real/<int:data_id>', methods=['GET'])
-def api_get_real_data_by_id(data_id):
-    """API endpoint untuk mendapatkan data real berdasarkan ID"""
-    if 'user_id' not in session:
-        return jsonify({'error': 'Unauthorized'}), 401
-    
-    # Ganti dengan logika untuk mengambil data real berdasarkan ID
-    real_data = data_processor.get_real_data_by_id(data_id)
-    
-    if real_data is None:
-        return jsonify({'error': 'Data not found'}), 404
-    
-    return jsonify(real_data), 200
-
-@main.route('/api/data/real', methods=['POST'])
-def api_post_real_data():
-    """API endpoint untuk menambahkan data real"""
-    if 'user_id' not in session:
-        return jsonify({'error': 'Unauthorized'}), 401
-    
-    # Ganti dengan logika untuk menambahkan data real sesuai kebutuhan
-    data_processor.add_real_data(request.json)
-    
-    return jsonify({'message': 'Data added successfully'}), 201
-
-@main.route('/api/data/real/<int:data_id>', methods=['PUT'])
-def api_put_real_data(data_id):
-    """API endpoint untuk mengupdate data real"""
-    if 'user_id' not in session:
-        return jsonify({'error': 'Unauthorized'}), 401
-    
-    # Ganti dengan logika untuk mengupdate data real sesuai kebutuhan
-    data_processor.update_real_data(data_id, request.json)
-    
-    return jsonify({'message': 'Data updated successfully'}), 200
-
-@main.route('/api/data/real/<int:data_id>', methods=['DELETE'])
-def api_delete_real_data(data_id):
-    """API endpoint untuk menghapus data real"""
-    if 'user_id' not in session:
-        return jsonify({'error': 'Unauthorized'}), 401
-    
-    # Ganti dengan logika untuk menghapus data real sesuai kebutuhan
-    data_processor.delete_real_data(data_id)
-    
-    return jsonify({'message': 'Data deleted successfully'}), 200
-
 @main.route('/api/properties')
 def api_properties():
     """API endpoint to get property data"""
@@ -276,6 +222,7 @@ def api_properties():
         max_price = request.args.get('max_price', '')
         bedrooms = request.args.get('bedrooms', '')
         condition = request.args.get('condition', '')
+        transaction_type = request.args.get('transaction_type', '')
 
         # Build filters
         filters = {}
@@ -289,6 +236,8 @@ def api_properties():
             filters['bedrooms'] = int(bedrooms)
         if condition:
             filters['condition'] = condition
+        if transaction_type:
+            filters['transaction_type'] = transaction_type
 
         # Get filtered properties
         all_properties = data_processor.get_filtered_properties(filters)
@@ -341,5 +290,21 @@ def api_locations():
         return jsonify({
             'locations': stats.get('locations', [])
         })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@main.route('/api/transaction-types')
+def api_transaction_types():
+    """API endpoint to get available transaction types"""
+    try:
+        if data_processor.df is not None and 'Tipe Iklan' in data_processor.df.columns:
+            transaction_types = [t for t in data_processor.df['Tipe Iklan'].dropna().unique() if t and t != '']
+            return jsonify({
+                'transaction_types': transaction_types
+            })
+        else:
+            return jsonify({
+                'transaction_types': ['Dijual', 'Disewa', 'Keduanya']
+            })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
