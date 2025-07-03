@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify, current_app
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import mysql
 
@@ -53,22 +53,32 @@ def register():
         name = request.form['name']
         email = request.form['email']
         password = request.form['password']
-        hashed_pw = generate_password_hash(password)
+        
+        # Registrasi selalu untuk role 'pengguna'
+        role = 'pengguna'
 
-        cur = mysql.connection.cursor()
-        cur.execute("SELECT * FROM users WHERE email = %s", (email,))
-        if cur.fetchone():
-            flash('Email sudah digunakan.', 'error')
-            cur.close()
+        try:
+            # Check if email already exists
+            existing_user = User.find_by_email(email)
+            
+            if existing_user:
+                flash('Email sudah digunakan.', 'error')
+                return render_template('login_register.html')
+
+            # Create new user
+            new_user = User(name=name, email=email, role=role)
+            new_user.set_password(password)
+            
+            if new_user.save():
+                flash('Registrasi berhasil! Akun pengguna telah dibuat. Silakan login.', 'success')
+                return redirect(url_for('main.login'))
+            else:
+                flash('Terjadi kesalahan saat membuat akun. Silakan coba lagi.', 'error')
+                return render_template('login_register.html')
+            
+        except Exception as e:
+            flash(f'Database error: {str(e)}', 'error')
             return render_template('login_register.html')
-
-        cur.execute("INSERT INTO users (name, email, password, role) VALUES (%s, %s, %s, %s)",
-                    (name, email, hashed_pw, 'pengguna'))
-        mysql.connection.commit()
-        cur.close()
-
-        flash('Registrasi berhasil! Silakan login.', 'success')
-        return redirect(url_for('main.login'))
 
     return render_template('login_register.html')
 
