@@ -134,7 +134,55 @@
 
         <!-- Prediksi -->
         <section id="prediksi" class="content-section">
-          <h1>Prediksi</h1>
+          <h1>Prediksi Harga Properti</h1>
+          <div class="prediksi-container">
+            <div class="prediksi-card">
+              <div class="prediksi-header">
+                <h2><span class="material-icons-sharp">psychology</span> Machine Learning Prediction</h2>
+                <p>Gunakan algoritma Machine Learning untuk memprediksi harga properti</p>
+              </div>
+              
+              <div class="models-info">
+                <div class="model-item">
+                  <span class="material-icons-sharp">smart_toy</span>
+                  <h3>Random Forest</h3>
+                  <p>Ensemble learning dengan multiple decision trees</p>
+                </div>
+                
+                <div class="model-item">
+                  <span class="material-icons-sharp">auto_awesome</span>
+                  <h3>XGBoost</h3>
+                  <p>Gradient boosting framework yang powerful</p>
+                </div>
+                
+                <div class="model-item">
+                  <span class="material-icons-sharp">speed</span>
+                  <h3>CatBoost</h3>
+                  <p>Handling categorical features dengan optimal</p>
+                </div>
+              </div>
+              
+              <div class="prediksi-actions">
+                <button class="btn-primary" onclick="openPredictionPage()">
+                  <span class="material-icons-sharp">launch</span>
+                  Buka Halaman Prediksi
+                </button>
+                
+                <button class="btn-secondary" onclick="trainModels()">
+                  <span class="material-icons-sharp">build</span>
+                  Train Models
+                </button>
+              </div>
+              
+              <div class="model-status" id="modelStatus">
+                <h3>Status Model</h3>
+                <div class="status-loading">
+                  <span class="material-icons-sharp">refresh</span>
+                  Loading status...
+                </div>
+              </div>
+            </div>
+          </div>
         </section>
 
         <!-- Total Properti -->

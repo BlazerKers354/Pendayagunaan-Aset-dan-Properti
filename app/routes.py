@@ -2,12 +2,31 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from werkzeug.security import generate_password_hash, check_password_hash
 from .data_processor import AssetDataProcessor
 from .models import User
+from .ml_models import PropertyPricePredictor
+from .prediction_functions import enhanced_predictor, predict_property_price, get_model_performance_summary, initialize_predictors
 import mysql.connector
+import json
+import os
 
 main = Blueprint('main', __name__)
 
-# Initialize data processor
+# Initialize data processor and ML predictor
 data_processor = AssetDataProcessor()
+ml_predictor = PropertyPricePredictor()
+
+# Try to load pre-trained models
+if os.path.exists('models'):
+    try:
+        ml_predictor.load_models()
+        print("✅ Pre-trained models loaded successfully")
+    except:
+        print("⚠️ No pre-trained models found, will train on first prediction")
+
+# Initialize enhanced predictors on startup
+try:
+    initialize_predictors()
+except Exception as e:
+    print(f"Warning: Could not initialize enhanced predictors: {e}")
 
 @main.route('/')
 def index():
@@ -209,101 +228,344 @@ def prediction():
     
     return render_template('prediction.html', prediction_data=prediction_data)
 
-@main.route('/api/properties')
-def api_properties():
-    """API endpoint to get property data"""
-    try:
-        # Get query parameters
-        page = int(request.args.get('page', 1))
-        per_page = int(request.args.get('per_page', 12))
-        location = request.args.get('location', '')
-        min_price = request.args.get('min_price', '')
-        max_price = request.args.get('max_price', '')
-        bedrooms = request.args.get('bedrooms', '')
-        condition = request.args.get('condition', '')
-        transaction_type = request.args.get('transaction_type', '')
-
-        # Build filters
-        filters = {}
-        if location:
-            filters['location'] = location
-        if min_price:
-            filters['min_price'] = int(min_price)
-        if max_price:
-            filters['max_price'] = int(max_price)
-        if bedrooms:
-            filters['bedrooms'] = int(bedrooms)
-        if condition:
-            filters['condition'] = condition
-        if transaction_type:
-            filters['transaction_type'] = transaction_type
-
-        # Get filtered properties
-        all_properties = data_processor.get_filtered_properties(filters)
-        
-        # Calculate pagination
-        total = len(all_properties)
-        start = (page - 1) * per_page
-        end = start + per_page
-        properties = all_properties[start:end]
-
-        return jsonify({
-            'properties': properties,
-            'total': total,
-            'page': page,
-            'per_page': per_page,
-            'total_pages': (total + per_page - 1) // per_page
-        })
+# Machine Learning Prediction Routes
+@main.route('/admin/prediction')
+def prediction_page():
+    """Enhanced prediction page for admin with multiple model support"""
+    if 'user_id' not in session or session.get('role') != 'admin':
+        flash('Akses ditolak. Hanya admin yang dapat mengakses halaman ini.', 'error')
+        return redirect(url_for('main.login'))
     
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@main.route('/api/property/<int:property_id>')
-def api_property_detail(property_id):
-    """API endpoint to get specific property details"""
-    try:
-        property_data = data_processor.get_property_by_id(property_id)
-        if property_data:
-            return jsonify(property_data)
-        else:
-            return jsonify({'error': 'Property not found'}), 404
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@main.route('/api/statistics')
-def api_statistics():
-    """API endpoint to get dataset statistics"""
+    # Get unique values for dropdowns
     try:
         stats = data_processor.get_statistics()
-        location_prices = data_processor.get_price_by_location()
-        stats['location_prices'] = location_prices
-        return jsonify(stats)
+        form_data = {
+            'kecamatan_list': sorted(stats.get('locations', [])),
+            'sertifikat_list': ['SHM', 'HGB', 'Girik', 'Belum Bersertifikat'],
+            'kondisi_list': ['Baik', 'Buruk'],
+            'tipe_iklan_list': ['Dijual', 'Disewa', 'Disewa/Dijual'],
+            'aksesibilitas_list': ['Baik', 'Buruk']
+        }
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@main.route('/api/locations')
-def api_locations():
-    """API endpoint to get available locations"""
+        print(f"Error getting form data: {e}")
+        form_data = {
+            'kecamatan_list': [],
+            'sertifikat_list': ['SHM', 'HGB', 'Girik', 'Belum Bersertifikat'],
+            'kondisi_list': ['Baik', 'Buruk'],
+            'tipe_iklan_list': ['Dijual', 'Disewa', 'Disewa/Dijual'],
+            'aksesibilitas_list': ['Baik', 'Buruk']
+        }
+    
+    return render_template('enhanced_prediction.html', form_data=form_data)
+    """Enhanced prediction page for admin with multiple model support"""
+    if 'user_id' not in session or session.get('role') != 'admin':
+        flash('Akses ditolak. Hanya admin yang dapat mengakses halaman ini.', 'error')
+        return redirect(url_for('main.login'))
+    
+    # Get unique values for dropdowns
     try:
         stats = data_processor.get_statistics()
+        form_data = {
+            'kecamatan_list': sorted(stats.get('locations', [])),
+            'sertifikat_list': ['SHM', 'HGB', 'Girik', 'Belum Bersertifikat'],
+            'kondisi_list': ['Baik', 'Buruk'],
+            'tipe_iklan_list': ['Dijual', 'Disewa', 'Disewa/Dijual'],
+            'aksesibilitas_list': ['Baik', 'Buruk']
+        }
+    except Exception as e:
+        print(f"Error getting form data: {e}")
+        form_data = {
+            'kecamatan_list': [],
+            'sertifikat_list': ['SHM', 'HGB', 'Girik', 'Belum Bersertifikat'],
+            'kondisi_list': ['Baik', 'Buruk'],
+            'tipe_iklan_list': ['Dijual', 'Disewa', 'Disewa/Dijual'],
+            'aksesibilitas_list': ['Baik', 'Buruk']
+        }
+    
+    return render_template('enhanced_prediction.html', form_data=form_data)
+
+@main.route('/api/predict', methods=['POST'])
+def api_predict():
+    """API endpoint untuk prediksi harga properti"""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    try:
+        data = request.get_json()
+        
+        # Validate required fields for building dataset
+        required_fields = ['kecamatan', 'sertifikat', 'kondisi_properti', 'tipe_iklan', 'aksesibilitas']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({'error': f'Field {field} is required'}), 400
+        
+        # Prepare input data for building dataset
+        input_data = {
+            'Kecamatan': data['kecamatan'],
+            'Sertifikat': data['sertifikat'],
+            'Kondisi_Properti': data['kondisi_properti'],
+            'Tipe_Iklan': data['tipe_iklan'],
+            'Aksesibilitas': data['aksesibilitas'],
+            'Luas_Tanah': float(data.get('luas_tanah', 200)),
+            'Luas_Bangunan': float(data.get('luas_bangunan', 150)),
+            'Kamar_Tidur': int(data.get('kamar_tidur', 3)),
+            'Kamar_Mandi': int(data.get('kamar_mandi', 2)),
+        }
+        
+        # Note: Latitude, Longitude, and Luas_kategori will be added automatically in predict_price method
+        
+        # Train models if not loaded
+        if not ml_predictor.models:
+            print("⚠️ Models not loaded, training new models...")
+            df = ml_predictor.load_data('../data/raw/Dataset_Bangunan_Surabaya.csv')
+            if df is not None:
+                ml_predictor.train_models(df)
+                ml_predictor.save_models()
+            else:
+                return jsonify({'error': 'Unable to load training data'}), 500
+        
+        # Get predictions from all models
+        predictions = {}
+        model_names = ['RandomForest', 'XGBoost', 'CatBoost']
+        
+        for model_name in model_names:
+            if model_name in ml_predictor.models:
+                try:
+                    pred = ml_predictor.predict_price(input_data, model_name)
+                    predictions[model_name] = {
+                        'price': round(pred, 2),
+                        'price_formatted': f"Rp {pred:,.0f}"
+                    }
+                except Exception as e:
+                    print(f"Error predicting with {model_name}: {e}")
+                    predictions[model_name] = {
+                        'price': 0,
+                        'price_formatted': "Error",
+                        'error': str(e)
+                    }
+        
+        # Calculate average prediction
+        valid_predictions = [p['price'] for p in predictions.values() if p['price'] > 0]
+        avg_prediction = sum(valid_predictions) / len(valid_predictions) if valid_predictions else 0
+        
+        # Get feature importance (from Random Forest)
+        feature_importance = None
+        if 'RandomForest' in ml_predictor.models:
+            feature_importance = ml_predictor.get_feature_importance('RandomForest')
+        
+        result = {
+            'success': True,
+            'predictions': predictions,
+            'average_prediction': {
+                'price': round(avg_prediction, 2),
+                'price_formatted': f"Rp {avg_prediction:,.0f}"
+            },
+            'input_data': input_data,
+            'feature_importance': feature_importance[:5] if feature_importance else None  # Top 5 features
+        }
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        print(f"Prediction error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@main.route('/api/train-models', methods=['POST'])
+def api_train_models():
+    """API endpoint untuk training ulang model"""
+    if 'user_id' not in session or session.get('role') != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    try:
+        print("🚀 Starting model training...")
+        
+        # Load data and train models
+        df = ml_predictor.load_data('../data/raw/Dataset_Bangunan_Surabaya.csv')
+        if df is None:
+            return jsonify({'error': 'Unable to load training data'}), 500
+        
+        # Train models
+        results = ml_predictor.train_models(df)
+        
+        # Save models
+        ml_predictor.save_models()
+        
+        # Format results
+        formatted_results = {}
+        for name, result in results.items():
+            formatted_results[name] = {
+                'r2_score': round(result['r2'], 4),
+                'mae': round(result['mae'], 2),
+                'rmse': round(result['rmse'], 2),
+                'cv_mean': round(result['cv_mean'], 4),
+                'cv_std': round(result['cv_std'], 4)
+            }
+        
         return jsonify({
-            'locations': stats.get('locations', [])
+            'success': True,
+            'message': 'Models trained successfully',
+            'results': formatted_results,
+            'data_size': len(df)
         })
+        
+    except Exception as e:
+        print(f"Training error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@main.route('/api/model-performance')
+def api_model_performance():
+    """API endpoint untuk mendapatkan performa model"""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    try:
+        # Check if models are loaded
+        if not ml_predictor.models:
+            return jsonify({
+                'models_loaded': False,
+                'message': 'No models loaded. Please train models first.'
+            })
+        
+        # Get feature importance for visualization
+        performance_data = {}
+        
+        for model_name in ml_predictor.models.keys():
+            feature_importance = ml_predictor.get_feature_importance(model_name)
+            if feature_importance:
+                # Convert numpy float32 to Python float for JSON serialization
+                feature_importance_clean = [
+                    (str(feature), float(importance)) 
+                    for feature, importance in feature_importance[:10]
+                ]
+                performance_data[model_name] = {
+                    'feature_importance': feature_importance_clean,
+                    'model_loaded': True
+                }
+            else:
+                performance_data[model_name] = {
+                    'feature_importance': [],
+                    'model_loaded': True
+                }
+        
+        return jsonify({
+            'models_loaded': True,
+            'performance_data': performance_data,
+            'available_models': list(ml_predictor.models.keys())
+        })
+        
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@main.route('/api/transaction-types')
-def api_transaction_types():
-    """API endpoint to get available transaction types"""
+# Enhanced Machine Learning Prediction Routes
+@main.route('/api/enhanced-predict', methods=['POST'])
+def api_enhanced_predict():
+    """Enhanced API endpoint for property price prediction using multiple models"""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    
     try:
-        if data_processor.df is not None and 'Tipe Iklan' in data_processor.df.columns:
-            transaction_types = [t for t in data_processor.df['Tipe Iklan'].dropna().unique() if t and t != '']
-            return jsonify({
-                'transaction_types': transaction_types
-            })
+        data = request.get_json()
+        property_type = data.get('property_type', 'building')
+        
+        # Validate required fields
+        if property_type == 'building':
+            required_fields = ['luas_bangunan', 'luas_tanah']
+            prediction_kwargs = {
+                'luas_bangunan': float(data.get('luas_bangunan', 150)),
+                'luas_tanah': float(data.get('luas_tanah', 200)),
+                'kecamatan': data.get('kecamatan', 'Surabaya'),
+                'kamar_tidur': int(data.get('kamar_tidur', 3)),
+                'kamar_mandi': int(data.get('kamar_mandi', 2)),
+                'sertifikat': data.get('sertifikat', 'SHM'),
+                'kondisi_properti': data.get('kondisi_properti', 'Baik'),
+                'tipe_iklan': data.get('tipe_iklan', 'Dijual'),
+                'aksesibilitas': data.get('aksesibilitas', 'Baik')
+            }
+        else:  # land
+            required_fields = ['luas_tanah']
+            prediction_kwargs = {
+                'luas_tanah': float(data.get('luas_tanah', 200)),
+                'kecamatan': data.get('kecamatan', 'Surabaya'),
+                'sertifikat': data.get('sertifikat', 'SHM'),
+                'kondisi': data.get('kondisi', 'Baik'),
+                'jumlah_penduduk': int(data.get('jumlah_penduduk', 10000))
+            }
+        
+        # Validate required fields
+        for field in required_fields:
+            if field not in data or not data[field]:
+                return jsonify({'error': f'Field {field} is required'}), 400
+        
+        # Get enhanced predictions
+        result = predict_property_price(property_type, **prediction_kwargs)
+        
+        # Add model performance summary
+        model_summary = get_model_performance_summary()
+        
+        # Format response
+        response = {
+            'success': True,
+            'property_type': property_type,
+            'predictions': result['individual_predictions'],
+            'ensemble_prediction': {
+                'value': result['ensemble_prediction'],
+                'formatted': result['formatted_prediction']
+            },
+            'confidence': result['confidence_metrics'],
+            'input_data': prediction_kwargs,
+            'model_summary': model_summary,
+            'recommendation': _get_price_recommendation(result['ensemble_prediction'], property_type)
+        }
+        
+        return jsonify(response)
+        
+    except Exception as e:
+        print(f"Enhanced prediction error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+def _get_price_recommendation(predicted_price, property_type):
+    """Generate price recommendation based on prediction"""
+    if not predicted_price:
+        return "Unable to generate recommendation"
+    
+    if property_type == 'building':
+        if predicted_price < 500000000:  # < 500M
+            return "Harga properti tergolong rendah untuk wilayah Surabaya"
+        elif predicted_price < 1000000000:  # 500M - 1B
+            return "Harga properti dalam rentang menengah"
+        elif predicted_price < 2000000000:  # 1B - 2B
+            return "Harga properti tergolong tinggi"
         else:
-            return jsonify({
-                'transaction_types': ['Dijual', 'Disewa', 'Keduanya']
-            })
+            return "Harga properti sangat tinggi, lokasi premium"
+    else:  # land
+        if predicted_price < 200000000:  # < 200M
+            return "Harga tanah tergolong rendah"
+        elif predicted_price < 500000000:  # 200M - 500M
+            return "Harga tanah dalam rentang menengah"
+        else:
+            return "Harga tanah tergolong tinggi"
+
+@main.route('/api/model-status')
+def api_model_status():
+    """API endpoint to get current model status and performance"""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    try:
+        model_summary = get_model_performance_summary()
+        
+        # Add detailed status
+        status = {
+            'models_loaded': model_summary['total_models'] > 0,
+            'flask_models_count': len(model_summary['flask_models']),
+            'notebook_models_count': len(model_summary['notebook_models']),
+            'available_models': model_summary['flask_models'] + model_summary['notebook_models'],
+            'feature_sets': model_summary['feature_sets'],
+            'last_training': "Available in models directory" if os.path.exists('models') else "No training data",
+            'recommendation': "Multiple models available for ensemble predictions" if model_summary['total_models'] > 1 else "Single model predictions available"
+        }
+        
+        return jsonify(status)
+        
     except Exception as e:
         return jsonify({'error': str(e)}), 500

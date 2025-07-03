@@ -40,7 +40,8 @@ CREATE TABLE `users` (
 
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` VALUES (1,'Admin','admin@telkom.co.id','<hashed_password>','admin');
+-- Admin user dengan password 'admin123' (hashed menggunakan Werkzeug)
+INSERT INTO `users` VALUES (1,'Administrator','admin@telkom.co.id','pbkdf2:sha256:600000$KvdIFquH8tgupXs3$cdbe17684980c07ca70b9edff6db949969e53618b01b6cffcae03259df080706','admin');
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 
