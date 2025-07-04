@@ -37,6 +37,40 @@ def init_mysql_db():
         """
         cursor.execute(create_users_table)
         
+        # Create properties table for CRUD operations
+        create_properties_table = """
+        CREATE TABLE IF NOT EXISTS properties (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            title VARCHAR(255) NOT NULL,
+            location VARCHAR(100) NOT NULL,
+            price BIGINT NOT NULL,
+            land_area DECIMAL(10,2) NOT NULL,
+            building_area DECIMAL(10,2) DEFAULT 0,
+            bedrooms INT DEFAULT 0,
+            bathrooms INT DEFAULT 0,
+            floors INT DEFAULT 1,
+            certificate VARCHAR(50),
+            condition_property VARCHAR(50),
+            facing VARCHAR(50),
+            water_source VARCHAR(50),
+            internet ENUM('Ya', 'Tidak') DEFAULT 'Tidak',
+            hook ENUM('Ya', 'Tidak') DEFAULT 'Tidak',
+            power INT DEFAULT 0,
+            dining_room VARCHAR(50),
+            living_room VARCHAR(50),
+            road_width VARCHAR(50),
+            furnished VARCHAR(50),
+            description TEXT,
+            property_type ENUM('tanah', 'tanah_bangunan') NOT NULL,
+            status ENUM('aktif', 'tidak_aktif') DEFAULT 'aktif',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            created_by INT,
+            FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
+        """
+        cursor.execute(create_properties_table)
+        
         # Check if admin user exists, if not create one
         cursor.execute('SELECT COUNT(*) FROM users WHERE role = "admin"')
         admin_count = cursor.fetchone()[0]

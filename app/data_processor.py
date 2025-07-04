@@ -310,3 +310,40 @@ class AssetDataProcessor:
             
         except (IndexError, KeyError):
             return None
+        
+    def get_unique_locations(self):
+        """Get list of unique locations/kecamatan"""
+        if self.df is None:
+            return []
+        
+        try:
+            # Get unique locations from Kecamatan column
+            locations = self.df['Kecamatan'].dropna().unique().tolist()
+            # Clean and sort
+            locations = [loc for loc in locations if loc and loc != 'nan']
+            return sorted(locations)
+        except:
+            return []
+    
+    def filter_data(self, data, filters):
+        """Filter data based on provided filters"""
+        filtered_data = data.copy()
+        
+        for key, value in filters.items():
+            if key == 'kondisi' and value:
+                filtered_data = [item for item in filtered_data 
+                               if item.get('kondisi', '').lower() == value.lower()]
+            elif key == 'kecamatan' and value:
+                filtered_data = [item for item in filtered_data 
+                               if item.get('kecamatan', '').lower() == value.lower()]
+            elif key == 'kamar_tidur' and value:
+                filtered_data = [item for item in filtered_data 
+                               if item.get('kamar_tidur', 0) == value]
+            elif key == 'min_price' and value:
+                filtered_data = [item for item in filtered_data 
+                               if item.get('harga', 0) >= value]
+            elif key == 'max_price' and value:
+                filtered_data = [item for item in filtered_data 
+                               if item.get('harga', 0) <= value]
+        
+        return filtered_data

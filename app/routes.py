@@ -183,26 +183,38 @@ def logout():
 
 @main.route('/data')
 def data():
-    """Halaman data"""
+    """Halaman data - redirect ke dashboard user"""
     if 'user_id' not in session:
         flash('Silakan login terlebih dahulu.', 'error')
         return redirect(url_for('main.login'))
-    return render_template('data.html')
+    # Redirect ke dashboard user karena fitur data sudah terintegrasi
+    return redirect(url_for('main.user_dashboard'))
 
 @main.route('/visualization')
 def visualization():
-    """Halaman visualisasi"""
+    """Halaman visualisasi - hanya untuk admin"""
     if 'user_id' not in session:
         flash('Silakan login terlebih dahulu.', 'error')
         return redirect(url_for('main.login'))
+    
+    # Check if user is admin
+    if session.get('role') != 'admin':
+        flash('Akses ditolak. Fitur ini hanya untuk administrator.', 'error')
+        return redirect(url_for('main.user_dashboard'))
+    
     return render_template('visualization.html')
 
 @main.route('/prediction')
 def prediction():
-    """Halaman prediksi"""
+    """Halaman prediksi - hanya untuk admin"""
     if 'user_id' not in session:
         flash('Silakan login terlebih dahulu.', 'error')
         return redirect(url_for('main.login'))
+    
+    # Check if user is admin
+    if session.get('role') != 'admin':
+        flash('Akses ditolak. Fitur ini hanya untuk administrator.', 'error')
+        return redirect(url_for('main.user_dashboard'))
     
     # Get dataset insights for prediction reference
     try:
@@ -566,6 +578,156 @@ def api_model_status():
         }
         
         return jsonify(status)
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@main.route('/api/locations')
+def api_locations():
+    """API endpoint untuk mendapatkan daftar lokasi"""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    try:
+        locations = data_processor.get_unique_locations()
+        return jsonify({'locations': locations})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@main.route('/api/properties')
+def api_properties():
+    """API endpoint untuk mendapatkan daftar properti dengan filter dan pagination"""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    try:
+        # Get parameters
+        page = int(request.args.get('page', 1))
+        per_page = int(request.args.get('per_page', 12))
+        asset_type = request.args.get('asset_type', '')
+        condition = request.args.get('condition', '')
+        location = request.args.get('location', '')
+        bedrooms = request.args.get('bedrooms', '')
+        min_price = request.args.get('min_price', '')
+        max_price = request.args.get('max_price', '')
+        
+        # Build filters
+        filters = {}
+        if condition:
+            filters['kondisi'] = condition
+        if location:
+            filters['kecamatan'] = location.lower()
+        if bedrooms:
+            filters['kamar_tidur'] = int(bedrooms)
+        if min_price:
+            filters['min_price'] = float(min_price)
+        if max_price:
+            filters['max_price'] = float(max_price)
+        
+        # Get data based on asset type
+        if asset_type == 'tanah':
+            # For land only, we'll filter building data where building_area is 0 or null
+            all_data = data_processor.get_building_data()
+            # Filter for land only (no building or minimal building area)
+            filtered_data = [item for item in all_data if item.get('luas_bangunan', 0) <= 10]
+        else:
+            # For building + land, get all building data
+            filtered_data = data_processor.get_building_data()
+        
+        # Apply filters
+        if filters:
+            filtered_data = data_processor.filter_data(filtered_data, filters)
+        
+        # Calculate pagination
+        total_items = len(filtered_data)
+        total_pages = (total_items + per_page - 1) // per_page
+        start_idx = (page - 1) * per_page
+        end_idx = start_idx + per_page
+        paginated_data = filtered_data[start_idx:end_idx]
+        
+        # Format data for frontend
+        properties = []
+        for i, item in enumerate(paginated_data):
+            property_data = {
+                'id': item.get('id', i),  # Use index as ID if not present
+                'title': f"Properti {item.get('kecamatan', 'Unknown')} - {item.get('luas_tanah', 0)} m²",
+                'location': item.get('kecamatan', 'Unknown'),
+                'price': float(item.get('harga', 0)),
+                'land_area': float(item.get('luas_tanah', 0)),
+                'building_area': float(item.get('luas_bangunan', 0) or 0),
+                'bedrooms': int(item.get('kamar_tidur', 0) or 0),
+                'bathrooms': int(item.get('kamar_mandi', 0) or 0),
+                'condition': item.get('kondisi', 'N/A'),
+                'certificate': item.get('sertifikat', 'N/A'),
+                'furnished': item.get('furnished', 'N/A'),
+                'floors': int(item.get('jumlah_lantai', 1) or 1),
+                'facing': item.get('hadap', 'N/A'),
+                'water_source': item.get('sumber_air', 'N/A'),
+                'internet': item.get('internet', 'N/A'),
+                'hook': item.get('hook', 'N/A'),
+                'power': int(item.get('daya_listrik', 0) or 0),
+                'dining_room': item.get('ruang_makan', 'N/A'),
+                'living_room': item.get('ruang_tamu', 'N/A'),
+                'road_width': item.get('lebar_jalan', 'N/A')
+            }
+            properties.append(property_data)
+        
+        return jsonify({
+            'properties': properties,
+            'total': total_items,
+            'page': page,
+            'per_page': per_page,
+            'total_pages': total_pages
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@main.route('/api/property/<int:property_id>')
+def api_property_detail(property_id):
+    """API endpoint untuk mendapatkan detail properti berdasarkan ID"""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    try:
+        # Get all building data
+        all_data = data_processor.get_building_data()
+        
+        # Find property by ID (simplified - in real app you'd have proper ID management)
+        property_data = None
+        for i, item in enumerate(all_data):
+            if item.get('id', i) == property_id or i == property_id:
+                property_data = item
+                break
+        
+        if not property_data:
+            return jsonify({'error': 'Property not found'}), 404
+        
+        # Format detailed property data
+        property_detail = {
+            'id': property_id,
+            'title': f"Properti {property_data.get('kecamatan', 'Unknown')} - {property_data.get('luas_tanah', 0)} m²",
+            'location': property_data.get('kecamatan', 'Unknown'),
+            'price': float(property_data.get('harga', 0)),
+            'land_area': float(property_data.get('luas_tanah', 0)),
+            'building_area': float(property_data.get('luas_bangunan', 0) or 0),
+            'bedrooms': int(property_data.get('kamar_tidur', 0) or 0),
+            'bathrooms': int(property_data.get('kamar_mandi', 0) or 0),
+            'condition': property_data.get('kondisi', 'N/A'),
+            'certificate': property_data.get('sertifikat', 'N/A'),
+            'furnished': property_data.get('furnished', 'N/A'),
+            'floors': int(property_data.get('jumlah_lantai', 1) or 1),
+            'facing': property_data.get('hadap', 'N/A'),
+            'water_source': property_data.get('sumber_air', 'N/A'),
+            'internet': property_data.get('internet', 'N/A'),
+            'hook': property_data.get('hook', 'N/A'),
+            'power': int(property_data.get('daya_listrik', 0) or 0),
+            'dining_room': property_data.get('ruang_makan', 'N/A'),
+            'living_room': property_data.get('ruang_tamu', 'N/A'),
+            'road_width': property_data.get('lebar_jalan', 'N/A')
+        }
+        
+        return jsonify(property_detail)
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
