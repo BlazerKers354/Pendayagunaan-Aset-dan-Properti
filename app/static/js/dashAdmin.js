@@ -193,9 +193,6 @@ async function loadProperties(page = 1) {
     const response = await fetch(`/api/admin/properties?${params}`);
     const data = await response.json();
     
-    console.log('API Response:', data); // Debug log
-    console.log('Properties received:', data.properties); // Debug log
-    
     if (data.error) {
       throw new Error(data.error);
     }
@@ -219,9 +216,6 @@ async function loadProperties(page = 1) {
 // Display properties in table
 function displayProperties(properties) {
   const tableBody = document.getElementById('propertiesTableBody');
-  
-  console.log('displayProperties called with:', properties); // Debug
-  console.log('Properties length:', properties.length); // Debug
   
   if (properties.length === 0) {
     document.getElementById('noProperties').style.display = 'block';
@@ -416,32 +410,21 @@ async function deleteProperty(propertyId) {
   }
   
   try {
-    console.log('Attempting to delete property ID:', propertyId); // Debug
-    console.log('Current properties:', currentProperties); // Debug
-    
     // Find the property in currentProperties to get its type
     const property = currentProperties.find(p => p.id === propertyId);
     if (!property) {
-      console.error('Property not found in currentProperties:', propertyId); // Debug
       alert('Property not found');
       return;
     }
     
     const propertyType = property.property_type;
-    console.log('Property type:', propertyType); // Debug
-    console.log('Delete URL:', `/api/admin/property/${propertyType}/${propertyId}`); // Debug
-    
     const response = await fetch(`/api/admin/property/${propertyType}/${propertyId}`, {
       method: 'DELETE'
     });
     
-    console.log('Delete response status:', response.status); // Debug
-    
     const result = await response.json();
-    console.log('Delete response result:', result); // Debug
     
     if (!response.ok || result.error) {
-      console.error('Delete failed:', result.error); // Debug
       alert('Error: ' + (result.error || 'Failed to delete property'));
       return;
     }
