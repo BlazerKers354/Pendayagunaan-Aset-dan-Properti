@@ -1,26 +1,25 @@
 from flask import Flask
+from flask_mysqldb import MySQL
 import os
-from .database import init_mysql_db
+
+# Buat objek MySQL sekali di level global
+mysql = MySQL()
 
 def create_app():
     app = Flask(__name__)
-    
-    # Configure app with MySQL settings
+
+    # Konfigurasi rahasia & database
     app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'telkom-dashboard-secret')
     app.config['MYSQL_HOST'] = os.getenv('MYSQL_HOST', 'localhost')
     app.config['MYSQL_USER'] = os.getenv('MYSQL_USER', 'root')
-    app.config['MYSQL_PASSWORD'] = os.getenv('MYSQL_PASSWORD', '')
+    app.config['MYSQL_PASSWORD'] = os.getenv('MYSQL_PASSWORD', 'Arya151203F.')
+    app.config['MYSQL_PORT'] = int(os.getenv('MYSQL_PORT', 3307))
     app.config['MYSQL_DB'] = os.getenv('MYSQL_DB', 'db_kp')
-    
-    # Initialize MySQL database
-    with app.app_context():
-        try:
-            init_mysql_db()
-        except Exception as e:
-            print(f"Warning: Could not initialize MySQL database: {e}")
-            print("Please make sure MySQL server is running and database 'db_kp' exists")
 
-    # Register blueprints
+    # Init MySQL ke app
+    mysql.init_app(app)
+
+    # Register blueprint
     from .routes import main
     app.register_blueprint(main)
 

@@ -1,33 +1,63 @@
 <!DOCTYPE html>
 <html lang="id">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link
-      href="https://fonts.googleapis.com/icon?family=Material+Icons+Sharp"
-      rel="stylesheet"
-    />
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', filename='css/dashAdmin.css') }}"
-    />
-    <title>Dashboard Admin | Telkom Aset</title>
-  </head>
-  <body>
-    <div class="container">
-      <!-- SIDEBAR -->
-      <aside>
-        <div class="toggle">
-          <div class="logo">
-            <img
-              src="{{ url_for('static', filename='img/telkomLogo.png') }}"
-              style="border-radius: 20px"
-            />
-            <h2>Telkom<span class="danger">Aset</span></h2>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard Admin | Telkom Aset</title>
+
+  <!-- Google Icons -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Sharp" rel="stylesheet" />
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+
+  <!-- Font Awesome -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+
+  <!-- Custom Dashboard CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/dashAdmin.css') }}" />
+</head>
+<body>
+  <!-- TOP NAVBAR -->
+  <nav class="top-navbar">
+    <div class="navbar-content">
+      <div class="navbar-left">
+        <button id="menu-btn" class="menu-toggle">
+          <span class="material-icons-sharp">menu</span>
+        </button>
+        <button id="sidebar-toggle" class="sidebar-toggle">
+          <span class="material-icons-sharp">menu_open</span>
+        </button>
+        <div class="navbar-logo">
+          <img src="{{ url_for('static', filename='img/telkomLogo.png') }}" alt="Telkom Logo" />
+          <h2>Telkom<span class="danger">Aset</span></h2>
+        </div>
+      </div>
+      
+      <div class="navbar-right">
+        <div class="dark-mode">
+          <span class="material-icons-sharp active">light_mode</span>
+          <span class="material-icons-sharp">dark_mode</span>
+        </div>
+        <div class="profile">
+          <div class="info">
+            <p>Hey, <b>{{ session.user_name or 'Admin' }}</b></p>
+            <small class="text-muted">Admin</small>
           </div>
-          <div class="close" id="close-btn">
-            <span class="material-icons-sharp">close</span>
+          <div class="profile-photo">
+            <img src="{{ url_for('static', filename='img/profile.jpg') }}" />
           </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <!-- SIDEBAR -->
+    <aside>
+      <div class="sidebar-content">
+        <div class="close" id="close-btn">
+          <span class="material-icons-sharp">close</span>
         </div>
 
         <div class="sidebar">
@@ -63,269 +93,207 @@
             <span class="material-icons-sharp">notifications</span>
             <h3>Notifikasi</h3>
           </a>
-          <a href="{{ url_for('main.logout') }}">
+          <a href="{{ url_for('main.logout_user') }}">
             <span class="material-icons-sharp">logout</span>
             <h3>Logout</h3>
           </a>
         </div>
-      </aside>
-
-      <!-- MAIN CONTENT -->
-      <main>
-        <!-- Dashboard Utama -->
-        <section id="dashboard-home" class="content-section active">
-          <h1>Dashboard Utama</h1>
-        </section>
-
-        <!-- Visualisasi -->
-        <section id="visualisasi" class="content-section">
-          <h1>Visualisasi Data</h1>
-        </section>
-
-        <!-- Prediksi -->
-        <section id="prediksi" class="content-section">
-          <h1>Prediksi</h1>
-        </section>
-
-        <!-- Total Properti -->
-        <section id="total-properti" class="content-section">
-          <h1>Total Properti</h1>
-        </section>
-
-        <!-- Aset Disewa -->
-        <section id="aset-sewa" class="content-section">
-          <h1>Aset Tersedia untuk Disewa</h1>
-        </section>
-
-        <!-- Aset Dijual -->
-        <section id="aset-jual" class="content-section">
-          <h1>Aset Tersedia untuk Dijual</h1>
-        </section>
-
-        <!-- Manajemen Aset -->
-        <section id="manajemen-aset" class="content-section">
-          <h1>Manajemen Data Aset</h1>
-        </section>
-
-        <!-- Notifikasi -->
-        <section id="notifikasi" class="content-section">
-          <h1>Notifikasi</h1>
-        </section>
-      </main>
-
-      <!-- RIGHT SECTION -->
-      <div class="right-section">
-        <div class="nav">
-          <button id="menu-btn">
-            <span class="material-icons-sharp">menu</span>
-          </button>
-          <div class="dark-mode">
-            <span class="material-icons-sharp active">light_mode</span>
-            <span class="material-icons-sharp">dark_mode</span>
-          </div>
-          <div class="profile">
-            <div class="info">
-              <p>Hey, <b>{{ session['user_id'] }}</b></p>
-              <small class="text-muted">Admin</small>
-            </div>
-            <div class="profile-photo">
-              <img src="{{ url_for('static', filename='img/profile.jpg') }}" />
-            </div>
-          </div>
-        </div>
       </div>
-    </div>
-    <script src="{{ url_for('static', filename='js/dashAdmin.js') }}"></script>
-  </body>
-</html>
+    </aside>
 
-<!DOCTYPE html>
-<html lang="id">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link
-      href="https://fonts.googleapis.com/icon?family=Material+Icons+Sharp"
-      rel="stylesheet"
-    />
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', filename='css/dashAdmin.css') }}"
-    />
-    <title>Dashboard Admin | Telkom Aset</title>
-  </head>
-  <body>
-    <div class="container">
-      <!-- SIDEBAR -->
-      <aside>
-        <div class="toggle">
-          <div class="logo">
-            <img
-              src="{{ url_for('static', filename='img/telkomLogo.png') }}"
-              style="border-radius: 20px"
-            />
-            <h2>Telkom<span class="danger">Aset</span></h2>
+    <!-- MAIN CONTENT -->
+    <main>
+      <!-- Dashboard Utama -->
+      <section id="dashboard-home" class="content-section active">
+        <h1>Dashboard Utama</h1>
+        <div class="analyse">
+          <div class="sales">
+            <div class="status">
+              <div class="info">
+                <h3>Total Properties</h3>
+                <h1>{{ stats.total_properties or 0 }}</h1>
+              </div>
+              <div class="progresss">
+                <svg><circle cx="38" cy="38" r="36"></circle></svg>
+                <div class="percentage"><p>+81%</p></div>
+              </div>
+            </div>
           </div>
-          <div class="close" id="close-btn">
-            <span class="material-icons-sharp">close</span>
+          <div class="visits">
+            <div class="status">
+              <div class="info">
+                <h3>Average Price</h3>
+                <h1>Rp {{ "{:,.0f}".format(stats.avg_price or 0) }}</h1>
+              </div>
+              <div class="progresss">
+                <svg><circle cx="38" cy="38" r="36"></circle></svg>
+                <div class="percentage"><p>-48%</p></div>
+              </div>
+            </div>
+          </div>
+          <div class="searches">
+            <div class="status">
+              <div class="info">
+                <h3>Total Locations</h3>
+                <h1>{{ stats.total_locations or 0 }}</h1>
+              </div>
+              <div class="progresss">
+                <svg><circle cx="38" cy="38" r="36"></circle></svg>
+                <div class="percentage"><p>+21%</p></div>
+              </div>
+            </div>
           </div>
         </div>
+      </section>
 
-        <div class="sidebar">
-          <a href="#" class="menu-link active" data-target="dashboard-home">
-            <span class="material-icons-sharp">dashboard</span>
-            <h3>Dashboard</h3>
-          </a>
-          <a href="#" class="menu-link" data-target="visualisasi">
-            <span class="material-icons-sharp">insights</span>
-            <h3>Visualisasi Data</h3>
-          </a>
-          <a href="#" class="menu-link" data-target="prediksi">
-            <span class="material-icons-sharp">show_chart</span>
-            <h3>Prediksi</h3>
-          </a>
-          <a href="#" class="menu-link" data-target="total-properti">
-            <span class="material-icons-sharp">home_work</span>
-            <h3>Total Properti</h3>
-          </a>
-          <a href="#" class="menu-link" data-target="aset-sewa">
-            <span class="material-icons-sharp">apartment</span>
-            <h3>Aset Disewa</h3>
-          </a>
-          <a href="#" class="menu-link" data-target="aset-jual">
-            <span class="material-icons-sharp">sell</span>
-            <h3>Aset Dijual</h3>
-          </a>
-          <a href="#" class="menu-link" data-target="manajemen-aset">
-            <span class="material-icons-sharp">manage_accounts</span>
-            <h3>Manajemen Data Aset</h3>
-          </a>
-          <a href="#" class="menu-link" data-target="notifikasi">
-            <span class="material-icons-sharp">notifications</span>
-            <h3>Notifikasi</h3>
-          </a>
-          <a href="{{ url_for('main.logout') }}">
-            <span class="material-icons-sharp">logout</span>
-            <h3>Logout</h3>
-          </a>
-        </div>
-      </aside>
+      <!-- Visualisasi -->
+      <section id="visualisasi" class="content-section">
+        <div class="p-4">
+          <h1 class="fw-bold mb-3">Visualisasi Harga Aset</h1>
+          <p class="text-muted mb-4">Analisis trend dan perbandingan harga properti</p>
 
-      <!-- MAIN CONTENT -->
-      <main>
-        <!-- Dashboard Utama -->
-        <section id="dashboard-home" class="content-section active">
-          <h1>Dashboard Utama</h1>
-          <div class="analyse">
-            <div class="sales">
-              <div class="status">
-                <div class="info">
-                  <h3>Total Properties</h3>
-                  <h1>{{ stats.total_properties or 0 }}</h1>
-                </div>
-                <div class="progresss">
-                  <svg>
-                    <circle cx="38" cy="38" r="36"></circle>
-                  </svg>
-                  <div class="percentage">
-                    <p>+81%</p>
-                  </div>
+          <div class="row g-4 mb-4">
+            <div class="col-md-3 col-sm-6">
+              <div class="card text-center shadow-sm border-0">
+                <div class="card-body">
+                  <i class="fas fa-chart-line text-primary mb-2 display-6"></i>
+                  <h4 id="avgPrice">Rp 0</h4>
+                  <small class="text-muted">Harga Rata-rata</small>
                 </div>
               </div>
             </div>
-            <div class="visits">
-              <div class="status">
-                <div class="info">
-                  <h3>Average Price</h3>
-                  <h1>Rp {{ "{:,.0f}".format(stats.avg_price or 0) }}</h1>
-                </div>
-                <div class="progresss">
-                  <svg>
-                    <circle cx="38" cy="38" r="36"></circle>
-                  </svg>
-                  <div class="percentage">
-                    <p>-48%</p>
-                  </div>
+            <div class="col-md-3 col-sm-6">
+              <div class="card text-center shadow-sm border-0">
+                <div class="card-body">
+                  <i class="fas fa-arrow-up text-info mb-2 display-6"></i>
+                  <h4 id="maxPrice">Rp 0</h4>
+                  <small class="text-muted">Harga Tertinggi</small>
                 </div>
               </div>
             </div>
-            <div class="searches">
-              <div class="status">
-                <div class="info">
-                  <h3>Total Locations</h3>
-                  <h1>{{ stats.total_locations or 0 }}</h1>
+            <div class="col-md-3 col-sm-6">
+              <div class="card text-center shadow-sm border-0">
+                <div class="card-body">
+                  <i class="fas fa-arrow-down text-warning mb-2 display-6"></i>
+                  <h4 id="minPrice">Rp 0</h4>
+                  <small class="text-muted">Harga Terendah</small>
                 </div>
-                <div class="progresss">
-                  <svg>
-                    <circle cx="38" cy="38" r="36"></circle>
-                  </svg>
-                  <div class="percentage">
-                    <p>+21%</p>
-                  </div>
+              </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+              <div class="card text-center shadow-sm border-0">
+                <div class="card-body">
+                  <i class="fas fa-home text-secondary mb-2 display-6"></i>
+                  <h4 id="totalAssets">0</h4>
+                  <small class="text-muted">Total Aset</small>
                 </div>
               </div>
             </div>
           </div>
-        </section>
 
-        <!-- Visualisasi -->
-        <section id="visualisasi" class="content-section">
-          <h1>Visualisasi Data</h1>
-        </section>
-
-        <!-- Prediksi -->
-        <section id="prediksi" class="content-section">
-          <h1>Prediksi</h1>
-        </section>
-
-        <!-- Total Properti -->
-        <section id="total-properti" class="content-section">
-          <h1>Total Properti</h1>
-        </section>
-
-        <!-- Aset Disewa -->
-        <section id="aset-sewa" class="content-section">
-          <h1>Aset Tersedia untuk Disewa</h1>
-        </section>
-
-        <!-- Aset Dijual -->
-        <section id="aset-jual" class="content-section">
-          <h1>Aset Tersedia untuk Dijual</h1>
-        </section>
-
-        <!-- Manajemen Aset -->
-        <section id="manajemen-aset" class="content-section">
-          <h1>Manajemen Data Aset</h1>
-        </section>
-
-        <!-- Notifikasi -->
-        <section id="notifikasi" class="content-section">
-          <h1>Notifikasi</h1>
-        </section>
-      </main>
-
-      <!-- RIGHT SECTION -->
-      <div class="right-section">
-        <div class="nav">
-          <button id="menu-btn">
-            <span class="material-icons-sharp">menu</span>
-          </button>
-          <div class="dark-mode">
-            <span class="material-icons-sharp active">light_mode</span>
-            <span class="material-icons-sharp">dark_mode</span>
-          </div>
-          <div class="profile">
-            <div class="info">
-              <p>Hey, <b>{{ session.user_name or 'Admin' }}</b></p>
-              <small class="text-muted">Admin</small>
+          <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-light">
+              <h6 class="mb-0"><i class="fas fa-sliders-h me-2"></i>Filter Visualisasi</h6>
             </div>
-            <div class="profile-photo">
-              <img src="{{ url_for('static', filename='img/profile.jpg') }}" />
+            <div class="card-body">
+              <div class="row g-3">
+                <div class="col-md-4">
+                  <label class="form-label">Jenis Chart</label>
+                  <select class="form-select" id="chartType">
+                    <option value="bar">Bar</option>
+                    <option value="line">Line</option>
+                    <option value="pie">Pie</option>
+                    <option value="doughnut">Doughnut</option>
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Group By</label>
+                  <select class="form-select" id="groupBy">
+                    <option value="location">Lokasi</option>
+                    <option value="type">Jenis Aset</option>
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Metrik</label>
+                  <select class="form-select" id="metric">
+                    <option value="avgPrice">Harga Rata-rata</option>
+                    <option value="totalValue">Total Nilai</option>
+                    <option value="count">Jumlah Aset</option>
+                  </select>
+                </div>
+              </div>
+              <button class="btn btn-primary mt-3" id="updateChart">
+                <i class="fas fa-sync-alt me-1"></i>Update Visualisasi
+              </button>
+            </div>
+          </div>
+
+          <div class="card shadow-sm border-0">
+            <div class="card-body">
+              <canvas id="mainChart" height="300"></canvas>
             </div>
           </div>
         </div>
-      </div>
-    </div>
-    <script src="{{ url_for('static', filename='js/dashAdmin.js') }}"></script>
-  </body>
+      </section>
+
+      <!-- Prediksi -->
+      <section id="prediksi" class="content-section">
+        <div class="p-4">
+          <h1 class="fw-bold mb-3">Prediksi Harga Properti</h1>
+          <p class="text-muted mb-4">Gunakan formulir ini untuk memperkirakan harga aset.</p>
+
+          <div class="card shadow-sm border-0 mb-4" style="max-width: 600px;">
+            <div class="card-body">
+              <form id="predictionForm">
+                <div class="mb-3">
+                  <label class="form-label">Luas Tanah (m²)</label>
+                  <input type="number" name="land_area" class="form-control" placeholder="Contoh: 120" required>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Luas Bangunan (m²)</label>
+                  <input type="number" name="building_area" class="form-control" placeholder="Contoh: 90" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">
+                  <i class="fas fa-magic me-1"></i> Prediksi Sekarang
+                </button>
+              </form>
+              <div id="predictionResult" class="mt-4"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section lainnya tetap -->
+      <!-- Total Properti -->
+      <section id="total-properti" class="content-section">
+        <h1>Total Properti</h1>
+      </section>
+      <!-- Aset Disewa -->
+      <section id="aset-sewa" class="content-section">
+        <h1>Aset Disewa</h1>
+      </section>
+      <!-- Aset Dijual -->
+      <section id="aset-jual" class="content-section">
+        <h1>Aset Dijual</h1>
+      </section>
+      <!-- Manajemen Aset -->
+      <section id="manajemen-aset" class="content-section">
+        <h1>Manajemen Aset</h1>
+      </section>
+      <!-- Notifikasi -->
+      <section id="notifikasi" class="content-section">
+        <h1>Notifikasi</h1>
+      </section>
+    </main>
+  </div>
+
+  <!-- Bootstrap Bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Font Awesome -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+  <!-- Chart.js (optional) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Custom Dashboard JS -->
+  <script src="{{ url_for('static', filename='js/dashAdmin.js') }}"></script>
+</body>
 </html>
