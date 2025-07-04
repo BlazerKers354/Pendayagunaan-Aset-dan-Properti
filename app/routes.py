@@ -911,23 +911,35 @@ def api_admin_delete_property(property_type, property_id):
         return jsonify({'error': 'Unauthorized'}), 401
     
     try:
+        print(f"Attempting to delete property: type={property_type}, id={property_id}")  # Debug log
+        
         if property_type == 'tanah':
             property_obj = PropertiTanah.get_by_id(property_id)
-        else:
+        elif property_type == 'tanah_bangunan':
             property_obj = PropertiTanahBangunan.get_by_id(property_id)
+        else:
+            return jsonify({'error': 'Invalid property type'}), 400
         
         if not property_obj:
+            print(f"Property not found: type={property_type}, id={property_id}")  # Debug log
             return jsonify({'error': 'Property not found'}), 404
         
+        print(f"Found property: {property_obj.title}")  # Debug log
+        
         if property_obj.delete():
+            print(f"Property deleted successfully: type={property_type}, id={property_id}")  # Debug log
             return jsonify({
                 'success': True,
                 'message': 'Property deleted successfully'
             })
         else:
+            print(f"Failed to delete property: type={property_type}, id={property_id}")  # Debug log
             return jsonify({'error': 'Failed to delete property'}), 500
             
     except Exception as e:
+        print(f"Error deleting property: {str(e)}")  # Debug log
+        import traceback
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
 @main.route('/api/admin/property/<property_type>/<int:property_id>')
@@ -1001,3 +1013,8 @@ def get_database_statistics():
             'total_locations': 0,
             'locations': []
         }
+
+@main.route('/debug/properties')
+def debug_properties():
+    """Debug page untuk test properties API"""
+    return render_template('debug_properties.html')

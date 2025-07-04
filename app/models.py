@@ -107,7 +107,7 @@ class PropertiTanah:
     def __init__(self, id=None, title=None, location=None, price=None, land_area=None,
                  certificate=None, facing=None, water_source=None, internet='Tidak',
                  hook='Tidak', power=0, road_width=None, description=None, 
-                 status='aktif', created_by=None):
+                 status='aktif', created_by=None, created_at=None, updated_at=None):
         self.id = id
         self.title = title
         self.location = location
@@ -123,6 +123,8 @@ class PropertiTanah:
         self.description = description
         self.status = status
         self.created_by = created_by
+        self.created_at = created_at
+        self.updated_at = updated_at
 
     @staticmethod
     def get_all(limit=None, offset=0, filters=None):
@@ -264,7 +266,7 @@ class PropertiTanahBangunan:
                  certificate=None, condition_property=None, facing=None, 
                  water_source=None, internet='Tidak', hook='Tidak', power=0,
                  dining_room=None, living_room=None, road_width=None, furnished=None,
-                 description=None, status='aktif', created_by=None):
+                 description=None, status='aktif', created_by=None, created_at=None, updated_at=None):
         self.id = id
         self.title = title
         self.location = location
@@ -288,6 +290,8 @@ class PropertiTanahBangunan:
         self.description = description
         self.status = status
         self.created_by = created_by
+        self.created_at = created_at
+        self.updated_at = updated_at
 
     @staticmethod
     def get_all(limit=None, offset=0, filters=None):
