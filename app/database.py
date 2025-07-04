@@ -37,15 +37,43 @@ def init_mysql_db():
         """
         cursor.execute(create_users_table)
         
-        # Create properties table for CRUD operations
-        create_properties_table = """
-        CREATE TABLE IF NOT EXISTS properties (
+        # Drop old properties table if exists
+        cursor.execute("DROP TABLE IF EXISTS properties")
+        
+        # Create properti_tanah table
+        create_properti_tanah_table = """
+        CREATE TABLE IF NOT EXISTS properti_tanah (
             id INT AUTO_INCREMENT PRIMARY KEY,
             title VARCHAR(255) NOT NULL,
             location VARCHAR(100) NOT NULL,
             price BIGINT NOT NULL,
             land_area DECIMAL(10,2) NOT NULL,
-            building_area DECIMAL(10,2) DEFAULT 0,
+            certificate VARCHAR(50),
+            facing VARCHAR(50),
+            water_source VARCHAR(50),
+            internet ENUM('Ya', 'Tidak') DEFAULT 'Tidak',
+            hook ENUM('Ya', 'Tidak') DEFAULT 'Tidak',
+            power INT DEFAULT 0,
+            road_width VARCHAR(50),
+            description TEXT,
+            status ENUM('aktif', 'tidak_aktif') DEFAULT 'aktif',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            created_by INT,
+            FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
+        """
+        cursor.execute(create_properti_tanah_table)
+        
+        # Create properti_tanah_bangunan table
+        create_properti_tanah_bangunan_table = """
+        CREATE TABLE IF NOT EXISTS properti_tanah_bangunan (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            title VARCHAR(255) NOT NULL,
+            location VARCHAR(100) NOT NULL,
+            price BIGINT NOT NULL,
+            land_area DECIMAL(10,2) NOT NULL,
+            building_area DECIMAL(10,2) NOT NULL,
             bedrooms INT DEFAULT 0,
             bathrooms INT DEFAULT 0,
             floors INT DEFAULT 1,
@@ -61,7 +89,6 @@ def init_mysql_db():
             road_width VARCHAR(50),
             furnished VARCHAR(50),
             description TEXT,
-            property_type ENUM('tanah', 'tanah_bangunan') NOT NULL,
             status ENUM('aktif', 'tidak_aktif') DEFAULT 'aktif',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -69,7 +96,7 @@ def init_mysql_db():
             FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
         """
-        cursor.execute(create_properties_table)
+        cursor.execute(create_properti_tanah_bangunan_table)
         
         # Check if admin user exists, if not create one
         cursor.execute('SELECT COUNT(*) FROM users WHERE role = "admin"')

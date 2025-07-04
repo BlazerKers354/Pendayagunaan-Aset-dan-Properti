@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify, current_app
 from werkzeug.security import generate_password_hash, check_password_hash
 from .data_processor import AssetDataProcessor
-from .models import User
+from .models import User, PropertiTanah, PropertiTanahBangunan
 from .ml_models import PropertyPricePredictor
 from .prediction_functions import enhanced_predictor, predict_property_price, get_model_performance_summary, initialize_predictors
 import mysql.connector
@@ -107,22 +107,18 @@ def admin_dashboard():
         flash('Akses ditolak. Silakan login sebagai admin.', 'error')
         return redirect(url_for('main.login'))
     
-    # Get detailed statistics for admin dashboard
+    # Get statistics from database
     try:
-        stats = data_processor.get_statistics()
-        location_prices = data_processor.get_price_by_location()
+        stats = get_database_statistics()
         admin_stats = {
             'total_properties': stats.get('total_properties', 0),
             'avg_price': stats.get('avg_price', 0),
             'min_price': stats.get('min_price', 0),
             'max_price': stats.get('max_price', 0),
-            'avg_land_area': stats.get('avg_land_area', 0),
-            'avg_building_area': stats.get('avg_building_area', 0),
-            'total_locations': len(stats.get('locations', [])),
+            'total_locations': stats.get('total_locations', 0),
             'locations': stats.get('locations', []),
-            'conditions': stats.get('conditions', []),
-            'certificates': stats.get('certificates', []),
-            'location_prices': location_prices
+            'tanah_count': stats.get('tanah_count', 0),
+            'bangunan_count': stats.get('bangunan_count', 0)
         }
     except Exception as e:
         print(f"Error getting admin statistics: {e}")
@@ -131,13 +127,10 @@ def admin_dashboard():
             'avg_price': 0,
             'min_price': 0,
             'max_price': 0,
-            'avg_land_area': 0,
-            'avg_building_area': 0,
             'total_locations': 0,
             'locations': [],
-            'conditions': [],
-            'certificates': [],
-            'location_prices': {}
+            'tanah_count': 0,
+            'bangunan_count': 0
         }
     
     return render_template('dashboard_admin.html', stats=admin_stats)
@@ -154,14 +147,15 @@ def user_dashboard():
     user_name = user.name if user else 'Pengguna'
     session['user_name'] = user_name  # Simpan di session untuk digunakan di template
     
-    # Get basic statistics for dashboard
+    # Get statistics from database
     try:
-        stats = data_processor.get_statistics()
+        stats = get_database_statistics()
         dashboard_stats = {
             'total_properties': stats.get('total_properties', 0),
             'avg_price': stats.get('avg_price', 0),
-            'total_locations': len(stats.get('locations', [])),
-            'total_conditions': len(stats.get('conditions', []))
+            'total_locations': stats.get('total_locations', 0),
+            'tanah_count': stats.get('tanah_count', 0),
+            'bangunan_count': stats.get('bangunan_count', 0)
         }
     except Exception as e:
         print(f"Error getting statistics: {e}")
@@ -169,7 +163,8 @@ def user_dashboard():
             'total_properties': 0,
             'avg_price': 0,
             'total_locations': 0,
-            'total_conditions': 0
+            'tanah_count': 0,
+            'bangunan_count': 0
         }
     
     return render_template('dashboard_user.html', stats=dashboard_stats)
@@ -604,73 +599,69 @@ def api_properties():
         # Get parameters
         page = int(request.args.get('page', 1))
         per_page = int(request.args.get('per_page', 12))
-        asset_type = request.args.get('asset_type', '')
-        condition = request.args.get('condition', '')
+        property_type = request.args.get('property_type', '')  # 'tanah' or 'tanah_bangunan'
         location = request.args.get('location', '')
-        bedrooms = request.args.get('bedrooms', '')
         min_price = request.args.get('min_price', '')
         max_price = request.args.get('max_price', '')
+        status = request.args.get('status', '')
+        bedrooms = request.args.get('bedrooms', '')
         
         # Build filters
         filters = {}
-        if condition:
-            filters['kondisi'] = condition
         if location:
-            filters['kecamatan'] = location.lower()
-        if bedrooms:
-            filters['kamar_tidur'] = int(bedrooms)
+            filters['location'] = location
         if min_price:
-            filters['min_price'] = float(min_price)
+            filters['price_min'] = float(min_price)
         if max_price:
-            filters['max_price'] = float(max_price)
+            filters['price_max'] = float(max_price)
+        if status:
+            filters['status'] = status
+        if bedrooms:
+            filters['bedrooms'] = int(bedrooms)
         
-        # Get data based on asset type
-        if asset_type == 'tanah':
-            # For land only, we'll filter building data where building_area is 0 or null
-            all_data = data_processor.get_building_data()
-            # Filter for land only (no building or minimal building area)
-            filtered_data = [item for item in all_data if item.get('luas_bangunan', 0) <= 10]
-        else:
-            # For building + land, get all building data
-            filtered_data = data_processor.get_building_data()
+        # Calculate offset
+        offset = (page - 1) * per_page
         
-        # Apply filters
-        if filters:
-            filtered_data = data_processor.filter_data(filtered_data, filters)
-        
-        # Calculate pagination
-        total_items = len(filtered_data)
-        total_pages = (total_items + per_page - 1) // per_page
-        start_idx = (page - 1) * per_page
-        end_idx = start_idx + per_page
-        paginated_data = filtered_data[start_idx:end_idx]
-        
-        # Format data for frontend
+        # Get data based on property type
         properties = []
-        for i, item in enumerate(paginated_data):
-            property_data = {
-                'id': item.get('id', i),  # Use index as ID if not present
-                'title': f"Properti {item.get('kecamatan', 'Unknown')} - {item.get('luas_tanah', 0)} m²",
-                'location': item.get('kecamatan', 'Unknown'),
-                'price': float(item.get('harga', 0)),
-                'land_area': float(item.get('luas_tanah', 0)),
-                'building_area': float(item.get('luas_bangunan', 0) or 0),
-                'bedrooms': int(item.get('kamar_tidur', 0) or 0),
-                'bathrooms': int(item.get('kamar_mandi', 0) or 0),
-                'condition': item.get('kondisi', 'N/A'),
-                'certificate': item.get('sertifikat', 'N/A'),
-                'furnished': item.get('furnished', 'N/A'),
-                'floors': int(item.get('jumlah_lantai', 1) or 1),
-                'facing': item.get('hadap', 'N/A'),
-                'water_source': item.get('sumber_air', 'N/A'),
-                'internet': item.get('internet', 'N/A'),
-                'hook': item.get('hook', 'N/A'),
-                'power': int(item.get('daya_listrik', 0) or 0),
-                'dining_room': item.get('ruang_makan', 'N/A'),
-                'living_room': item.get('ruang_tamu', 'N/A'),
-                'road_width': item.get('lebar_jalan', 'N/A')
-            }
-            properties.append(property_data)
+        total_items = 0
+        
+        if property_type == 'tanah':
+            # Get only land properties
+            tanah_properties = PropertiTanah.get_all(limit=per_page, offset=offset, filters=filters)
+            properties = [prop.to_dict() for prop in tanah_properties]
+            
+            # Get total count for pagination
+            all_tanah = PropertiTanah.get_all(filters=filters)
+            total_items = len(all_tanah)
+            
+        elif property_type == 'tanah_bangunan':
+            # Get only building+land properties
+            bangunan_properties = PropertiTanahBangunan.get_all(limit=per_page, offset=offset, filters=filters)
+            properties = [prop.to_dict() for prop in bangunan_properties]
+            
+            # Get total count for pagination
+            all_bangunan = PropertiTanahBangunan.get_all(filters=filters)
+            total_items = len(all_bangunan)
+            
+        else:
+            # Get both types
+            tanah_properties = PropertiTanah.get_all(filters=filters)
+            bangunan_properties = PropertiTanahBangunan.get_all(filters=filters)
+            
+            # Combine both types
+            all_properties = []
+            all_properties.extend([prop.to_dict() for prop in tanah_properties])
+            all_properties.extend([prop.to_dict() for prop in bangunan_properties])
+            
+            # Sort by created_at (newest first)
+            all_properties.sort(key=lambda x: x.get('id', 0), reverse=True)
+            
+            total_items = len(all_properties)
+            properties = all_properties[offset:offset + per_page]
+        
+        # Calculate total pages
+        total_pages = (total_items + per_page - 1) // per_page
         
         return jsonify({
             'properties': properties,
@@ -731,3 +722,282 @@ def api_property_detail(property_id):
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+# Admin API for CRUD operations
+@main.route('/api/admin/properties')
+def api_admin_properties():
+    """API endpoint untuk admin mendapatkan semua properti"""
+    if 'user_id' not in session or session.get('role') != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    try:
+        # Get parameters
+        page = int(request.args.get('page', 1))
+        per_page = int(request.args.get('per_page', 10))
+        property_type = request.args.get('property_type', '')
+        status = request.args.get('status', '')
+        
+        # Build filters
+        filters = {}
+        if status:
+            filters['status'] = status
+        
+        # Calculate offset
+        offset = (page - 1) * per_page
+        
+        # Get data based on property type
+        properties = []
+        total_items = 0
+        
+        if property_type == 'tanah':
+            tanah_properties = PropertiTanah.get_all(limit=per_page, offset=offset, filters=filters)
+            properties = [prop.to_dict() for prop in tanah_properties]
+            all_tanah = PropertiTanah.get_all(filters=filters)
+            total_items = len(all_tanah)
+        elif property_type == 'tanah_bangunan':
+            bangunan_properties = PropertiTanahBangunan.get_all(limit=per_page, offset=offset, filters=filters)
+            properties = [prop.to_dict() for prop in bangunan_properties]
+            all_bangunan = PropertiTanahBangunan.get_all(filters=filters)
+            total_items = len(all_bangunan)
+        else:
+            # Get both types
+            tanah_properties = PropertiTanah.get_all(filters=filters)
+            bangunan_properties = PropertiTanahBangunan.get_all(filters=filters)
+            
+            all_properties = []
+            all_properties.extend([prop.to_dict() for prop in tanah_properties])
+            all_properties.extend([prop.to_dict() for prop in bangunan_properties])
+            
+            all_properties.sort(key=lambda x: x.get('id', 0), reverse=True)
+            total_items = len(all_properties)
+            properties = all_properties[offset:offset + per_page]
+        
+        total_pages = (total_items + per_page - 1) // per_page
+        
+        return jsonify({
+            'properties': properties,
+            'total': total_items,
+            'page': page,
+            'per_page': per_page,
+            'total_pages': total_pages
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@main.route('/api/admin/property', methods=['POST'])
+def api_admin_create_property():
+    """Create new property"""
+    if 'user_id' not in session or session.get('role') != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    try:
+        data = request.get_json()
+        property_type = data.get('property_type')
+        
+        if property_type == 'tanah':
+            property_obj = PropertiTanah(
+                title=data.get('title'),
+                location=data.get('location'),
+                price=data.get('price'),
+                land_area=data.get('land_area'),
+                certificate=data.get('certificate'),
+                facing=data.get('facing'),
+                water_source=data.get('water_source'),
+                internet=data.get('internet', 'Tidak'),
+                hook=data.get('hook', 'Tidak'),
+                power=data.get('power', 0),
+                road_width=data.get('road_width'),
+                description=data.get('description'),
+                status=data.get('status', 'aktif'),
+                created_by=session['user_id']
+            )
+        else:  # tanah_bangunan
+            property_obj = PropertiTanahBangunan(
+                title=data.get('title'),
+                location=data.get('location'),
+                price=data.get('price'),
+                land_area=data.get('land_area'),
+                building_area=data.get('building_area'),
+                bedrooms=data.get('bedrooms', 0),
+                bathrooms=data.get('bathrooms', 0),
+                floors=data.get('floors', 1),
+                certificate=data.get('certificate'),
+                condition_property=data.get('condition_property'),
+                facing=data.get('facing'),
+                water_source=data.get('water_source'),
+                internet=data.get('internet', 'Tidak'),
+                hook=data.get('hook', 'Tidak'),
+                power=data.get('power', 0),
+                dining_room=data.get('dining_room'),
+                living_room=data.get('living_room'),
+                road_width=data.get('road_width'),
+                furnished=data.get('furnished'),
+                description=data.get('description'),
+                status=data.get('status', 'aktif'),
+                created_by=session['user_id']
+            )
+        
+        if property_obj.save():
+            return jsonify({
+                'success': True,
+                'message': 'Property created successfully',
+                'property': property_obj.to_dict()
+            })
+        else:
+            return jsonify({'error': 'Failed to create property'}), 500
+            
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@main.route('/api/admin/property/<property_type>/<int:property_id>', methods=['PUT'])
+def api_admin_update_property(property_type, property_id):
+    """Update existing property"""
+    if 'user_id' not in session or session.get('role') != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    try:
+        data = request.get_json()
+        
+        if property_type == 'tanah':
+            property_obj = PropertiTanah.get_by_id(property_id)
+        else:
+            property_obj = PropertiTanahBangunan.get_by_id(property_id)
+        
+        if not property_obj:
+            return jsonify({'error': 'Property not found'}), 404
+        
+        # Update fields
+        property_obj.title = data.get('title', property_obj.title)
+        property_obj.location = data.get('location', property_obj.location)
+        property_obj.price = data.get('price', property_obj.price)
+        property_obj.land_area = data.get('land_area', property_obj.land_area)
+        property_obj.certificate = data.get('certificate', property_obj.certificate)
+        property_obj.facing = data.get('facing', property_obj.facing)
+        property_obj.water_source = data.get('water_source', property_obj.water_source)
+        property_obj.internet = data.get('internet', property_obj.internet)
+        property_obj.hook = data.get('hook', property_obj.hook)
+        property_obj.power = data.get('power', property_obj.power)
+        property_obj.road_width = data.get('road_width', property_obj.road_width)
+        property_obj.description = data.get('description', property_obj.description)
+        property_obj.status = data.get('status', property_obj.status)
+        
+        if property_type == 'tanah_bangunan':
+            property_obj.building_area = data.get('building_area', property_obj.building_area)
+            property_obj.bedrooms = data.get('bedrooms', property_obj.bedrooms)
+            property_obj.bathrooms = data.get('bathrooms', property_obj.bathrooms)
+            property_obj.floors = data.get('floors', property_obj.floors)
+            property_obj.condition_property = data.get('condition_property', property_obj.condition_property)
+            property_obj.dining_room = data.get('dining_room', property_obj.dining_room)
+            property_obj.living_room = data.get('living_room', property_obj.living_room)
+            property_obj.furnished = data.get('furnished', property_obj.furnished)
+        
+        if property_obj.save():
+            return jsonify({
+                'success': True,
+                'message': 'Property updated successfully',
+                'property': property_obj.to_dict()
+            })
+        else:
+            return jsonify({'error': 'Failed to update property'}), 500
+            
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@main.route('/api/admin/property/<property_type>/<int:property_id>', methods=['DELETE'])
+def api_admin_delete_property(property_type, property_id):
+    """Delete property"""
+    if 'user_id' not in session or session.get('role') != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    try:
+        if property_type == 'tanah':
+            property_obj = PropertiTanah.get_by_id(property_id)
+        else:
+            property_obj = PropertiTanahBangunan.get_by_id(property_id)
+        
+        if not property_obj:
+            return jsonify({'error': 'Property not found'}), 404
+        
+        if property_obj.delete():
+            return jsonify({
+                'success': True,
+                'message': 'Property deleted successfully'
+            })
+        else:
+            return jsonify({'error': 'Failed to delete property'}), 500
+            
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@main.route('/api/admin/property/<property_type>/<int:property_id>')
+def api_admin_get_property(property_type, property_id):
+    """Get single property by ID"""
+    if 'user_id' not in session or session.get('role') != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    try:
+        if property_type == 'tanah':
+            property_obj = PropertiTanah.get_by_id(property_id)
+        else:
+            property_obj = PropertiTanahBangunan.get_by_id(property_id)
+        
+        if not property_obj:
+            return jsonify({'error': 'Property not found'}), 404
+        
+        return jsonify({
+            'success': True,
+            'property': property_obj.to_dict()
+        })
+            
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+def get_database_statistics():
+    """Get statistics from database tables"""
+    try:
+        # Get all properties from both tables
+        tanah_properties = PropertiTanah.get_all()
+        bangunan_properties = PropertiTanahBangunan.get_all()
+        
+        all_properties = []
+        all_properties.extend([prop.to_dict() for prop in tanah_properties])
+        all_properties.extend([prop.to_dict() for prop in bangunan_properties])
+        
+        if not all_properties:
+            return {
+                'total_properties': 0,
+                'avg_price': 0,
+                'min_price': 0,
+                'max_price': 0,
+                'total_locations': 0,
+                'locations': []
+            }
+        
+        # Calculate statistics
+        prices = [prop['price'] for prop in all_properties if prop['price']]
+        locations = list(set([prop['location'] for prop in all_properties if prop['location']]))
+        
+        stats = {
+            'total_properties': len(all_properties),
+            'avg_price': sum(prices) / len(prices) if prices else 0,
+            'min_price': min(prices) if prices else 0,
+            'max_price': max(prices) if prices else 0,
+            'total_locations': len(locations),
+            'locations': locations,
+            'tanah_count': len(tanah_properties),
+            'bangunan_count': len(bangunan_properties)
+        }
+        
+        return stats
+        
+    except Exception as e:
+        print(f"Error getting database statistics: {e}")
+        return {
+            'total_properties': 0,
+            'avg_price': 0,
+            'min_price': 0,
+            'max_price': 0,
+            'total_locations': 0,
+            'locations': []
+        }
