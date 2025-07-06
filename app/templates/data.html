@@ -1,6 +1,10 @@
 {% extends "layout.html" %}
 
-{% block title %}Data Aset - Pendayagunaan Aset{% endblock %}
+{% block title %}Data Aset - Pendayagunaan Aset{% endbloc                                <button class="btn btn-danger me-2" id="                <button type="button" class="btn btn-danger" id="requestInfoBtn">
+                    <i class="fas fa-envelope me-2"></i>Minta Info Lebih Lanjut
+                </button>lyFilter">
+                                    <i class="fas fa-filter me-1"></i>Terapkan Filter
+                                </button>}
 
 {% block content %}
 <!-- Navigation-->
@@ -14,7 +18,7 @@
             <ul class="navbar-nav ms-auto">
                 <li class="nav-item"><a class="nav-link" href="{{ url_for('main.user_dashboard') }}">Dashboard</a></li>
                 <li class="nav-item"><a class="nav-link" href="{{ url_for('main.visualization') }}">Visualisasi</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ url_for('main.prediction') }}">Prediksi</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('main.prediksi_tanah') }}">Prediksi Tanah</a></li>
                 <li class="nav-item">
                     <a class="nav-link text-warning" href="{{ url_for('main.logout_user') }}">
                         <i class="fas fa-sign-out-alt me-1"></i>Logout
@@ -26,7 +30,7 @@
 </nav>
 
 <!-- Header-->
-<header class="bg-primary bg-gradient text-white" style="padding-top: 7rem;">
+<header class="bg-danger bg-gradient text-white" style="padding-top: 7rem;">
     <div class="container px-4 text-center">
         <h1 class="fw-bolder">Data Aset Properti</h1>
         <p class="lead">Temukan aset yang tepat untuk kebutuhan Anda</p>
@@ -86,7 +90,7 @@
                         </div>
                         <div class="row mt-3">
                             <div class="col-12 text-center">
-                                <button class="btn btn-primary me-2" id="applyFilter">
+                                <button class="btn btn-danger me-2" id="applyFilter">
                                     <i class="fas fa-search me-1"></i>Terapkan Filter
                                 </button>
                                 <button class="btn btn-outline-secondary" id="resetFilter">
@@ -104,14 +108,14 @@
             <div class="col-12">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h3>Daftar Aset Tersedia</h3>
-                    <div class="badge bg-primary fs-6">
+                    <div class="badge bg-danger fs-6">
                         <span id="totalAssets">0</span> aset ditemukan
                     </div>
                 </div>
 
                 <!-- Loading State -->
                 <div id="loadingState" class="text-center py-5">
-                    <div class="spinner-border text-primary" role="status">
+                    <div class="spinner-border text-danger" role="status">
                         <span class="visually-hidden">Loading...</span>
                     </div>
                     <p class="mt-3">Memuat data aset...</p>
@@ -156,7 +160,7 @@
                 <button type="button" class="btn btn-success" id="contactOwnerBtn">
                     <i class="fas fa-phone me-1"></i>Hubungi Pemilik
                 </button>
-                <button type="button" class="btn btn-primary" id="requestInfoBtn">
+                <button type="button" class="btn btn-danger" id="requestInfoBtn">
                     <i class="fas fa-envelope me-1"></i>Minta Info Lebih
                 </button>
             </div>
@@ -324,7 +328,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                 </div>
                 <div class="card-footer bg-transparent">
-                    <button class="btn btn-primary btn-sm me-2 view-detail-btn" data-property-id="${property.id}">
+                    <button class="btn btn-danger btn-sm me-2 view-detail-btn" data-property-id="${property.id}">
                         <i class="fas fa-eye me-1"></i>Lihat Detail
                     </button>
                     <button class="btn btn-outline-success btn-sm contact-btn">
@@ -340,7 +344,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function getConditionBadgeClass(condition) {
         switch(condition.toLowerCase()) {
             case 'baru': return 'bg-success';
-            case 'bagus': return 'bg-primary';
+            case 'bagus': return 'bg-danger';
             case 'sudah renovasi': return 'bg-warning';
             default: return 'bg-secondary';
         }
@@ -483,42 +487,42 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="row g-3 mb-4">
                             <div class="col-sm-6">
                                 <div class="border rounded p-3">
-                                    <i class="fas fa-bed text-primary"></i>
+                                    <i class="fas fa-bed text-danger"></i>
                                     <strong class="ms-2">Kamar Tidur</strong><br>
                                     <span class="ms-4">${property.bedrooms} Kamar</span>
                                 </div>
                             </div>
                             <div class="col-sm-6">
                                 <div class="border rounded p-3">
-                                    <i class="fas fa-bath text-primary"></i>
+                                    <i class="fas fa-bath text-danger"></i>
                                     <strong class="ms-2">Kamar Mandi</strong><br>
                                     <span class="ms-4">${property.bathrooms} Kamar</span>
                                 </div>
                             </div>
                             <div class="col-sm-6">
                                 <div class="border rounded p-3">
-                                    <i class="fas fa-expand-arrows-alt text-primary"></i>
+                                    <i class="fas fa-expand-arrows-alt text-danger"></i>
                                     <strong class="ms-2">Luas Tanah</strong><br>
                                     <span class="ms-4">${property.land_area.toLocaleString()} m²</span>
                                 </div>
                             </div>
                             <div class="col-sm-6">
                                 <div class="border rounded p-3">
-                                    <i class="fas fa-home text-primary"></i>
+                                    <i class="fas fa-home text-danger"></i>
                                     <strong class="ms-2">Luas Bangunan</strong><br>
                                     <span class="ms-4">${property.building_area.toLocaleString()} m²</span>
                                 </div>
                             </div>
                             <div class="col-sm-6">
                                 <div class="border rounded p-3">
-                                    <i class="fas fa-certificate text-primary"></i>
+                                    <i class="fas fa-certificate text-danger"></i>
                                     <strong class="ms-2">Sertifikat</strong><br>
                                     <span class="ms-4">${property.certificate}</span>
                                 </div>
                             </div>
                             <div class="col-sm-6">
                                 <div class="border rounded p-3">
-                                    <i class="fas fa-bolt text-primary"></i>
+                                    <i class="fas fa-bolt text-danger"></i>
                                     <strong class="ms-2">Daya Listrik</strong><br>
                                     <span class="ms-4">${property.power > 0 ? property.power + ' Watt' : 'N/A'}</span>
                                 </div>
@@ -556,7 +560,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="col-md-4">
                         <div class="card bg-light">
                             <div class="card-body text-center">
-                                <h5 class="text-primary">Harga Total</h5>
+                                <h5 class="text-danger">Harga Total</h5>
                                 <h3 class="text-success">Rp ${property.price.toLocaleString()}</h3>
                                 <hr>
                                 <h6>Harga per m²</h6>

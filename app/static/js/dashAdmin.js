@@ -94,28 +94,7 @@ if (updateChartBtn) {
 
     if (mainChart) mainChart.destroy();
 
-    // Dummy data untuk demo
-    const dummyLabels = ["A", "B", "C", "D"];
-    const dummyData = [100, 200, 150, 300];
-
-    mainChart = new Chart(ctx, {
-      type: chartType,
-      data: {
-        labels: dummyLabels,
-        datasets: [
-          {
-            label: "Dummy Data",
-            data: dummyData,
-            backgroundColor: ["#6C9BCF", "#FF0060", "#1B9C85", "#F7D060"],
-          },
-        ],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-      },
-    });
-
+    // TODO: Implement real data fetching from API
     console.log(`Chart Updated: ${chartType} by ${groupBy} - ${metric}`);
   });
 }

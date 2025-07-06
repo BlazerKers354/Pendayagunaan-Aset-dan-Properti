@@ -17,7 +17,16 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     
+    <!-- Telkom Color Scheme -->
     <style>
+        :root {
+            --telkom-red: #dc3545;
+            --telkom-dark: #c82333;
+            --telkom-light: #f8d7da;
+            --telkom-white: #ffffff;
+            --telkom-success: #28a745;
+        }
+        
         body {
             font-family: 'Inter', sans-serif;
             background-color: #f8f9fa;
@@ -42,12 +51,73 @@
         .flash-message.success {
             background-color: #d4edda;
             color: #155724;
-            border-left: 4px solid #28a745;
+            border-left: 4px solid var(--telkom-success);
         }
         
         .flash-message.error {
-            background-color: #f8d7da;
-            color: #721c24;
+            background-color: var(--telkom-light);
+            color: var(--telkom-dark);
+            border-left: 4px solid var(--telkom-red);
+        }
+        
+        /* Telkom Button Styling */
+        .btn-primary {
+            background-color: var(--telkom-red);
+            border-color: var(--telkom-red);
+        }
+        
+        .btn-primary:hover, .btn-primary:focus {
+            background-color: var(--telkom-dark);
+            border-color: var(--telkom-dark);
+        }
+        
+        .btn-outline-primary {
+            color: var(--telkom-red);
+            border-color: var(--telkom-red);
+        }
+        
+        .btn-outline-primary:hover, .btn-outline-primary:focus {
+            background-color: var(--telkom-red);
+            border-color: var(--telkom-red);
+            color: var(--telkom-white);
+        }
+        
+        /* Card Headers */
+        .card-header {
+            background-color: var(--telkom-red);
+            color: var(--telkom-white);
+            border-bottom: 1px solid var(--telkom-dark);
+        }
+        
+        .bg-primary {
+            background-color: var(--telkom-red) !important;
+        }
+        
+        .text-primary {
+            color: var(--telkom-red) !important;
+        }
+        
+        .border-primary {
+            border-color: var(--telkom-red) !important;
+        }
+        
+        /* Card Hover Effects */
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(220, 53, 69, 0.15);
+            transition: all 0.3s ease;
+        }
+        
+        /* Form Controls Focus */
+        .form-control:focus {
+            border-color: var(--telkom-red);
+            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+        }
+        
+        .form-select:focus {
+            border-color: var(--telkom-red);
+            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+        }
             border-left: 4px solid #dc3545;
         }
         

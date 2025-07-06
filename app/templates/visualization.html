@@ -14,7 +14,7 @@
             <ul class="navbar-nav ms-auto">
                 <li class="nav-item"><a class="nav-link" href="{{ url_for('main.user_dashboard') }}">Dashboard</a></li>
                 <li class="nav-item"><a class="nav-link" href="{{ url_for('main.data') }}">Data Aset</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ url_for('main.prediction') }}">Prediksi</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('main.prediksi_tanah') }}">Prediksi Tanah</a></li>
                 <li class="nav-item">
                     <a class="nav-link text-warning" href="{{ url_for('main.logout_user') }}">
                         <i class="fas fa-sign-out-alt me-1"></i>Logout
@@ -26,7 +26,7 @@
 </nav>
 
 <!-- Header-->
-<header class="bg-gradient-primary text-white" style="padding-top: 7rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+<header class="bg-gradient-danger text-white" style="padding-top: 7rem; background: linear-gradient(135deg, #DC143C 0%, #8B0000 100%);">
     <div class="container px-4 text-center">
         <h1 class="fw-bolder">Visualisasi Harga Aset</h1>
         <p class="lead">Analisis trend dan perbandingan harga properti</p>
@@ -40,7 +40,7 @@
             <div class="col-md-3 col-sm-6">
                 <div class="card text-center shadow-sm border-0 h-100">
                     <div class="card-body">
-                        <div class="display-6 text-primary mb-2">
+                        <div class="display-6 text-danger mb-2">
                             <i class="fas fa-chart-line"></i>
                         </div>
                         <h4 class="card-title text-success" id="avgPrice">Rp 0</h4>
@@ -76,7 +76,7 @@
                         <div class="display-6 text-secondary mb-2">
                             <i class="fas fa-home"></i>
                         </div>
-                        <h4 class="card-title text-primary" id="totalAssets">0</h4>
+                        <h4 class="card-title text-danger" id="totalAssets">0</h4>
                         <p class="card-text text-muted">Total Aset</p>
                     </div>
                 </div>
@@ -120,7 +120,7 @@
                         </div>
                         <div class="row mt-3">
                             <div class="col-12 text-center">
-                                <button class="btn btn-primary" id="updateChart">
+                                <button class="btn btn-danger" id="updateChart">
                                     <i class="fas fa-sync-alt me-1"></i>Update Visualisasi
                                 </button>
                             </div>
@@ -137,10 +137,10 @@
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="mb-0" id="chartTitle">Visualisasi Harga Aset</h5>
                         <div class="btn-group" role="group">
-                            <button type="button" class="btn btn-outline-secondary btn-sm" id="downloadChart">
+                            <button type="button" class="btn btn-outline-danger btn-sm" id="downloadChart">
                                 <i class="fas fa-download me-1"></i>Download
                             </button>
-                            <button type="button" class="btn btn-outline-secondary btn-sm" id="fullscreenChart">
+                            <button type="button" class="btn btn-outline-danger btn-sm" id="fullscreenChart">
                                 <i class="fas fa-expand me-1"></i>Fullscreen
                             </button>
                         </div>
@@ -188,7 +188,7 @@
                 <div class="card shadow-sm border-0">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">Detail Data Harga</h5>
-                        <button class="btn btn-outline-success btn-sm" id="exportData">
+                        <button class="btn btn-outline-danger btn-sm" id="exportData">
                             <i class="fas fa-file-excel me-1"></i>Export Excel
                         </button>
                     </div>

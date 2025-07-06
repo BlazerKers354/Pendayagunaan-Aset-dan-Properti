@@ -16,6 +16,218 @@
 
   <!-- Custom Dashboard CSS -->
   <link rel="stylesheet" href="{{ url_for('static', filename='css/dashAdmin.css') }}" />
+  
+  <!-- Custom Telkom Color Scheme -->
+  <style>
+    :root {
+      --telkom-red: #DC143C;
+      --telkom-dark: #8B0000;
+      --telkom-light: rgba(220, 20, 60, 0.1);
+      --color-info-dark: #7d8da1;
+      --border-radius-1: 0.4rem;
+    }
+    
+    .analyse .sales .status .progresss svg circle:nth-child(1) {
+      stroke: var(--telkom-red);
+    }
+    
+    .analyse .visits .status .progresss svg circle:nth-child(1) {
+      stroke: var(--telkom-red);
+    }
+    
+    .analyse .searches .status .progresss svg circle:nth-child(1) {
+      stroke: var(--telkom-red);
+    }
+    
+    /* Sidebar Menu Styling */
+    .sidebar a {
+      display: flex;
+      align-items: center;
+      color: var(--color-info-dark);
+      height: 3.7rem;
+      gap: 1rem;
+      position: relative;
+      margin-left: 2rem;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      border-radius: var(--border-radius-1);
+    }
+    
+    .sidebar a:hover {
+      background: var(--telkom-light);
+      color: var(--telkom-red) !important;
+      transform: translateX(4px);
+      margin-right: 1rem;
+      box-shadow: 0 2px 8px rgba(220, 53, 69, 0.1);
+    }
+    
+    .sidebar a:hover span,
+    .menu-link:hover span {
+      margin-left: 0.6rem;
+      transition: all 0.3s ease;
+      color: var(--telkom-red) !important;
+    }
+    
+    .sidebar a.active,
+    .menu-link.active {
+      background: var(--telkom-red);
+      color: white !important;
+      position: relative;
+      margin-right: 1rem;
+      box-shadow: 0 4px 12px rgba(220, 20, 60, 0.2);
+    }
+    
+    .sidebar a.active::before,
+    .menu-link.active::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 4px;
+      height: 60%;
+      background: var(--telkom-dark);
+      border-radius: 0 3px 3px 0;
+    }
+    
+    .menu-link.active {
+      background: var(--telkom-red);
+      color: white !important;
+      position: relative;
+    }
+    
+    .menu-link.active::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 4px;
+      height: 60%;
+      background: var(--telkom-dark);
+      border-radius: 0 3px 3px 0;
+    }
+    
+    .card:hover {
+      box-shadow: 0 8px 25px rgba(220, 20, 60, 0.15);
+      transform: translateY(-2px);
+      transition: all 0.3s ease;
+    }
+    
+    .btn-outline-danger:hover,
+    .menu-link-external:hover,
+    .quick-action-btn:hover {
+      background-color: var(--telkom-red) !important;
+      border-color: var(--telkom-red) !important;
+      color: white !important;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(220, 20, 60, 0.3);
+      transition: all 0.3s ease;
+    }
+    
+    /* Ensure all quick action buttons have same hover effect */
+    .btn-outline-danger:hover i,
+    .btn-outline-danger:hover strong,
+    .btn-outline-danger:hover small,
+    .menu-link-external:hover i,
+    .menu-link-external:hover strong,
+    .menu-link-external:hover small,
+    .quick-action-btn:hover i,
+    .quick-action-btn:hover strong,
+    .quick-action-btn:hover small {
+      color: white !important;
+    }
+    
+    .btn-outline-danger,
+    .menu-link-external,
+    .quick-action-btn {
+      transition: all 0.3s ease;
+    }
+    
+    /* Force consistent hover for all quick action buttons */
+    a.btn.btn-outline-danger:hover,
+    a.menu-link-external:hover,
+    a.quick-action-btn:hover {
+      background-color: var(--telkom-red) !important;
+      border-color: var(--telkom-red) !important;
+      color: white !important;
+      transform: translateY(-2px) !important;
+      box-shadow: 0 4px 15px rgba(220, 20, 60, 0.3) !important;
+    }
+    
+    /* Ensure all text elements turn white on hover */
+    a.btn.btn-outline-danger:hover *,
+    a.menu-link-external:hover *,
+    a.quick-action-btn:hover * {
+      color: white !important;
+    }
+    
+    /* Override Bootstrap's default btn-outline-danger hover */
+    .btn-outline-danger:not(:disabled):not(.disabled):hover {
+      background-color: var(--telkom-red) !important;
+      border-color: var(--telkom-red) !important;
+      color: white !important;
+    }
+    
+    /* Ensure all sidebar links have consistent hover */
+    .sidebar a:not(.active):hover,
+    .menu-link:not(.active):hover {
+      background: var(--telkom-light) !important;
+      color: var(--telkom-red) !important;
+      transform: translateX(4px);
+      margin-right: 1rem;
+      box-shadow: 0 2px 8px rgba(220, 20, 60, 0.1);
+      transition: all 0.3s ease;
+    }
+    
+    .sidebar a:not(.active):hover h3,
+    .menu-link:not(.active):hover h3 {
+      color: var(--telkom-red) !important;
+    }
+    
+    .text-telkom {
+      color: var(--telkom-red) !important;
+    }
+    
+    .bg-telkom {
+      background-color: var(--telkom-red) !important;
+    }
+    
+    .border-telkom {
+      border-color: var(--telkom-red) !important;
+    }
+    
+    .alert-info {
+      background-color: var(--telkom-light);
+      border-color: var(--telkom-red);
+      color: var(--telkom-dark);
+    }
+    
+    .alert-success {
+      background-color: #d4edda;
+      border-color: #28a745;
+      color: #155724;
+    }
+    
+    .navbar-logo h2 .danger {
+      color: var(--telkom-red) !important;
+      font-weight: bold;
+    }
+    
+    /* Progress circles styling */
+    .analyse .progresss svg circle {
+      fill: none;
+      stroke-width: 10;
+      stroke-linecap: round;
+      transform: translate(5px, 5px);
+    }
+    
+    .analyse .progresss svg circle:nth-child(2) {
+      stroke-dasharray: 200;
+      stroke-dashoffset: 50;
+      stroke: var(--telkom-red);
+    }
+  </style>
 </head>
 <body>
   <!-- TOP NAVBAR -->
@@ -69,13 +281,13 @@
             <span class="material-icons-sharp">insights</span>
             <h3>Visualisasi Data</h3>
           </a>
-          <a href="#" class="menu-link" data-target="prediksi">
-            <span class="material-icons-sharp">show_chart</span>
-            <h3>Prediksi</h3>
+          <a href="#" class="menu-link" data-target="prediksi-properti">
+            <span class="material-icons-sharp">analytics</span>
+            <h3>Prediksi Properti</h3>
           </a>
-          <a href="#" class="menu-link" data-target="total-properti">
-            <span class="material-icons-sharp">home_work</span>
-            <h3>Total Properti</h3>
+          <a href="#" class="menu-link" data-target="manajemen-aset">
+            <span class="material-icons-sharp">manage_accounts</span>
+            <h3>Manajemen Data Aset</h3>
           </a>
           <a href="#" class="menu-link" data-target="aset-sewa">
             <span class="material-icons-sharp">apartment</span>
@@ -84,10 +296,6 @@
           <a href="#" class="menu-link" data-target="aset-jual">
             <span class="material-icons-sharp">sell</span>
             <h3>Aset Dijual</h3>
-          </a>
-          <a href="#" class="menu-link" data-target="manajemen-aset">
-            <span class="material-icons-sharp">manage_accounts</span>
-            <h3>Manajemen Data Aset</h3>
           </a>
           <a href="#" class="menu-link" data-target="notifikasi">
             <span class="material-icons-sharp">notifications</span>
@@ -105,41 +313,115 @@
     <main>
       <!-- Dashboard Utama -->
       <section id="dashboard-home" class="content-section active">
-        <h1>Dashboard Utama</h1>
+        <h1>Dashboard Utama Admin</h1>
+        <p class="text-muted mb-4">Ringkasan lengkap data prediksi properti Telkom</p>
+        
+        <!-- Statistik Utama -->
         <div class="analyse">
           <div class="sales">
             <div class="status">
               <div class="info">
-                <h3>Total Properties</h3>
+                <h3>Total Prediksi</h3>
                 <h1>{{ stats.total_properties or 0 }}</h1>
+                <small>Data Properti</small>
               </div>
               <div class="progresss">
                 <svg><circle cx="38" cy="38" r="36"></circle></svg>
-                <div class="percentage"><p>+81%</p></div>
+                <div class="percentage"><p>100%</p></div>
               </div>
             </div>
           </div>
           <div class="visits">
             <div class="status">
               <div class="info">
-                <h3>Average Price</h3>
+                <h3>Harga Rata-rata</h3>
                 <h1>Rp {{ "{:,.0f}".format(stats.avg_price or 0) }}</h1>
+                <small>Per Properti</small>
               </div>
               <div class="progresss">
                 <svg><circle cx="38" cy="38" r="36"></circle></svg>
-                <div class="percentage"><p>-48%</p></div>
+                <div class="percentage"><p>Valid</p></div>
               </div>
             </div>
           </div>
           <div class="searches">
             <div class="status">
               <div class="info">
-                <h3>Total Locations</h3>
+                <h3>Total Kecamatan</h3>
                 <h1>{{ stats.total_locations or 0 }}</h1>
+                <small>Area Surabaya</small>
               </div>
               <div class="progresss">
                 <svg><circle cx="38" cy="38" r="36"></circle></svg>
-                <div class="percentage"><p>+21%</p></div>
+                <div class="percentage"><p>31</p></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="row mt-4">
+          <div class="col-12">
+            <h3 class="mb-3">Menu Utama</h3>
+          </div>
+          <div class="col-md-3 mb-3">
+            <a href="#" class="btn btn-outline-danger w-100 py-3 menu-link quick-action-btn" data-target="prediksi-properti">
+              <i class="fas fa-chart-area d-block fs-1 mb-2"></i>
+              <strong>Prediksi Properti</strong><br>
+              <small>Hitung Harga Bangunan</small>
+            </a>
+          </div>
+          <div class="col-md-3 mb-3">
+            <a href="#" class="btn btn-outline-danger w-100 py-3 menu-link quick-action-btn" data-target="manajemen-aset">
+              <i class="fas fa-cogs d-block fs-1 mb-2"></i>
+              <strong>Manajemen CRUD</strong><br>
+              <small>Kelola Data Aset</small>
+            </a>
+          </div>
+        </div>
+
+        <!-- Ringkasan Data -->
+        <div class="row mt-4">
+          <div class="col-12">
+            <h3 class="mb-3">Ringkasan Data</h3>
+          </div>
+          
+          <div class="col-md-6 mb-4">
+            <div class="card shadow-sm border-0 h-100">
+              <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-map me-2"></i>Data Prediksi Tanah</h5>
+              </div>
+              <div class="card-body">
+                <div class="row text-center">
+                  <div class="col-6">
+                    <h3 class="text-success">{{ stats_tanah[0] if stats_tanah and stats_tanah[0] else 0 }}</h3>
+                    <small class="text-muted">Total Data</small>
+                  </div>
+                  <div class="col-6">
+                    <h6 class="text-success">Rp {{ "{:,.0f}".format(stats_tanah[1] if stats_tanah and stats_tanah[1] else 0) }}</h6>
+                    <small class="text-muted">Harga Rata-rata</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-md-6 mb-4">
+            <div class="card shadow-sm border-0 h-100">
+              <div class="card-header bg-danger text-white">
+                <h5 class="mb-0"><i class="fas fa-building me-2"></i>Data Prediksi Bangunan+Tanah</h5>
+              </div>
+              <div class="card-body">
+                <div class="row text-center">
+                  <div class="col-6">
+                    <h3 class="text-danger">{{ stats_bangunan[0] if stats_bangunan and stats_bangunan[0] else 0 }}</h3>
+                    <small class="text-muted">Total Data</small>
+                  </div>
+                  <div class="col-6">
+                    <h6 class="text-danger">Rp {{ "{:,.0f}".format(stats_bangunan[1] if stats_bangunan and stats_bangunan[1] else 0) }}</h6>
+                    <small class="text-muted">Harga Rata-rata</small>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -156,7 +438,7 @@
             <div class="col-md-3 col-sm-6">
               <div class="card text-center shadow-sm border-0">
                 <div class="card-body">
-                  <i class="fas fa-chart-line text-primary mb-2 display-6"></i>
+                  <i class="fas fa-chart-line text-danger mb-2 display-6"></i>
                   <h4 id="avgPrice">Rp 0</h4>
                   <small class="text-muted">Harga Rata-rata</small>
                 </div>
@@ -222,7 +504,7 @@
                   </select>
                 </div>
               </div>
-              <button class="btn btn-primary mt-3" id="updateChart">
+              <button class="btn btn-danger mt-3" id="updateChart">
                 <i class="fas fa-sync-alt me-1"></i>Update Visualisasi
               </button>
             </div>
@@ -236,53 +518,241 @@
         </div>
       </section>
 
-      <!-- Prediksi -->
-      <section id="prediksi" class="content-section">
+      <!-- Prediksi Properti -->
+      <section id="prediksi-properti" class="content-section">
         <div class="p-4">
           <h1 class="fw-bold mb-3">Prediksi Harga Properti</h1>
-          <p class="text-muted mb-4">Gunakan formulir ini untuk memperkirakan harga aset.</p>
+          <p class="text-muted mb-4">Sistem prediksi harga tanah dan bangunan menggunakan machine learning</p>
+          
+          <!-- Model Information -->
+          <div class="row g-4 mb-4">
+            <div class="col-md-4">
+              <div class="card text-center border-0 h-100 bg-info text-white">
+                <div class="card-body">
+                  <i class="fas fa-brain mb-2 display-6"></i>
+                  <h4>Random Forest</h4>
+                  <p class="mb-0 text-white">Model Utama Prediksi</p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card text-center border-0 h-100 bg-warning text-white">
+                <div class="card-body">
+                  <i class="fas fa-chart-area mb-2 display-6"></i>
+                  <h4>XGBoost</h4>
+                  <p class="mb-0 text-white">Model Pendukung</p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card text-center border-0 h-100 bg-success text-white">
+                <div class="card-body">
+                  <i class="fas fa-cogs mb-2 display-6"></i>
+                  <h4>CatBoost</h4>
+                  <p class="mb-0 text-white">Model Validasi</p>
+                </div>
+              </div>
+            </div>
+          </div>
 
-          <div class="card shadow-sm border-0 mb-4" style="max-width: 600px;">
-            <div class="card-body">
-              <form id="predictionForm">
-                <div class="mb-3">
-                  <label class="form-label">Luas Tanah (m²)</label>
-                  <input type="number" name="land_area" class="form-control" placeholder="Contoh: 120" required>
+          <!-- Prediction Options -->
+          <div class="row g-4 mb-4">
+            <div class="col-md-6">
+              <div class="card border-0 h-100">
+                <div class="card-header bg-success text-white">
+                  <h5 class="mb-0"><i class="fas fa-map me-2"></i>Prediksi Harga Tanah</h5>
                 </div>
-                <div class="mb-3">
-                  <label class="form-label">Luas Bangunan (m²)</label>
-                  <input type="number" name="building_area" class="form-control" placeholder="Contoh: 90" required>
+                <div class="card-body">
+                  <p class="text-muted">Prediksi harga tanah berdasarkan lokasi, luas, dan faktor geografis</p>
+                  <ul class="list-unstyled">
+                    <li><i class="fas fa-check text-success me-2"></i>Lokasi dan Kecamatan</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Luas Tanah (m²)</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Jenis Sertifikat</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Akses Jalan</li>
+                  </ul>
+                  <a href="{{ url_for('main.prediksi_tanah') }}" class="btn btn-success">
+                    <i class="fas fa-calculator me-2"></i>Mulai Prediksi Tanah
+                  </a>
                 </div>
-                <button type="submit" class="btn btn-primary w-100">
-                  <i class="fas fa-magic me-1"></i> Prediksi Sekarang
-                </button>
-              </form>
-              <div id="predictionResult" class="mt-4"></div>
+              </div>
+            </div>
+            
+            <div class="col-md-6">
+              <div class="card border-0 h-100">
+                <div class="card-header bg-danger text-white">
+                  <h5 class="mb-0"><i class="fas fa-building me-2"></i>Prediksi Harga Bangunan+Tanah</h5>
+                </div>
+                <div class="card-body">
+                  <p class="text-muted">Prediksi harga properti lengkap dengan bangunan dan tanah</p>
+                  <ul class="list-unstyled">
+                    <li><i class="fas fa-check text-danger me-2"></i>Semua Fitur Tanah</li>
+                    <li><i class="fas fa-check text-danger me-2"></i>Luas Bangunan (m²)</li>
+                    <li><i class="fas fa-check text-danger me-2"></i>Jumlah Kamar</li>
+                    <li><i class="fas fa-check text-danger me-2"></i>Kondisi Bangunan</li>
+                  </ul>
+                  <a href="{{ url_for('main.prediksi_bangunan_tanah') }}" class="btn btn-danger">
+                    <i class="fas fa-home me-2"></i>Mulai Prediksi Properti
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Accuracy Information -->
+          <div class="text-center">
+            <div class="alert alert-info border-2">
+              <i class="fas fa-info-circle me-2"></i>
+              <strong>Akurasi Model:</strong> Sistem menggunakan ensemble learning dengan akurasi tinggi berdasarkan data properti PT.TELKOM REGIONAL III.
             </div>
           </div>
         </div>
       </section>
-
-      <!-- Section lainnya tetap -->
-      <!-- Total Properti -->
-      <section id="total-properti" class="content-section">
-        <h1>Total Properti</h1>
-      </section>
+      
       <!-- Aset Disewa -->
       <section id="aset-sewa" class="content-section">
-        <h1>Aset Disewa</h1>
+        <div class="p-4">
+          <h1 class="fw-bold mb-3">Aset Disewa</h1>
+          <p class="text-muted mb-4">Manajemen data aset yang sedang disewa</p>
+          
+          <div class="text-center">
+            <div class="card shadow-sm border-0">
+              <div class="card-body py-5">
+                <i class="fas fa-apartment text-muted mb-3" style="font-size: 4rem;"></i>
+                <h4 class="text-muted">Fitur Dalam Pengembangan</h4>
+                <p class="text-muted">Modul manajemen aset disewa akan segera tersedia</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
+      
       <!-- Aset Dijual -->
       <section id="aset-jual" class="content-section">
-        <h1>Aset Dijual</h1>
+        <div class="p-4">
+          <h1 class="fw-bold mb-3">Aset Dijual</h1>
+          <p class="text-muted mb-4">Manajemen data aset yang sedang dijual</p>
+          
+          <div class="text-center">
+            <div class="card shadow-sm border-0">
+              <div class="card-body py-5">
+                <i class="fas fa-sell text-muted mb-3" style="font-size: 4rem;"></i>
+                <h4 class="text-muted">Fitur Dalam Pengembangan</h4>
+                <p class="text-muted">Modul manajemen aset dijual akan segera tersedia</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
       <!-- Manajemen Aset -->
       <section id="manajemen-aset" class="content-section">
-        <h1>Manajemen Aset</h1>
+        <div class="p-4">
+          <h1 class="fw-bold mb-3">Manajemen Data Aset (CRUD)</h1>
+          <p class="text-muted mb-4">Kelola, tambah, edit, dan hapus data aset properti secara lengkap</p>
+          
+          <!-- Status Data Saat Ini -->
+          <div class="row g-4 mb-4">
+            <div class="col-md-6">
+              <div class="card text-center shadow-sm border-0 h-100 bg-light">
+                <div class="card-body">
+                  <i class="fas fa-database text-danger mb-2 display-6"></i>
+                  <h4>Data Saat Ini</h4>
+                  <div class="row">
+                    <div class="col-6">
+                      <h3 class="text-success">{{ stats_tanah[0] if stats_tanah and stats_tanah[0] else 0 }}</h3>
+                      <small class="text-muted">Data Tanah</small>
+                    </div>
+                    <div class="col-6">
+                      <h3 class="text-danger">{{ stats_bangunan[0] if stats_bangunan and stats_bangunan[0] else 0 }}</h3>
+                      <small class="text-muted">Data Bangunan</small>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="card text-center shadow-sm border-0 h-100 bg-light">
+                <div class="card-body">
+                  <i class="fas fa-cogs text-dark mb-2 display-6"></i>
+                  <h4>Operasi CRUD</h4>
+                  <p class="text-success"><strong>Sistem Aktif</strong></p>
+                  <p class="text-muted">Create, Read, Update, Delete</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- CRUD Operations -->
+          <div class="row g-4 mb-4">
+            <div class="col-md-6">
+              <div class="card text-center shadow-sm border-0 h-100 border-success">
+                <div class="card-header bg-success text-white">
+                  <h5 class="mb-0"><i class="fas fa-plus-circle me-2"></i>CREATE - Tambah Data</h5>
+                </div>
+                <div class="card-body">
+                  <p class="text-muted">Tambahkan data prediksi baru dengan form validasi</p>
+                  <div class="d-grid gap-2">
+                    <a href="{{ url_for('main.tambah_tanah') }}" class="btn btn-success">
+                      <i class="fas fa-map me-2"></i>Tambah Data Tanah
+                    </a>
+                    <a href="{{ url_for('main.tambah_bangunan') }}" class="btn btn-success">
+                      <i class="fas fa-building me-2"></i>Tambah Data Bangunan
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="col-md-6">
+              <div class="card text-center shadow-sm border-0 h-100 border-danger">
+                <div class="card-header bg-danger text-white">
+                  <h5 class="mb-0"><i class="fas fa-eye me-2"></i>READ, UPDATE & DELETE</h5>
+                </div>
+                <div class="card-body">
+                  <p class="text-muted">Lihat, edit, dan hapus data dengan tabel interaktif</p>
+                  <div class="d-grid gap-2">
+                    <a href="{{ url_for('main.total_properti') }}" class="btn btn-danger">
+                      <i class="fas fa-table me-2"></i>Lihat Semua Data
+                    </a>
+                    <a href="{{ url_for('main.manajemen_aset') }}" class="btn btn-outline-danger">
+                      <i class="fas fa-list me-2"></i>Halaman Manajemen
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Access -->
+          <div class="text-center">
+            <div class="alert alert-success border-2">
+              <i class="fas fa-check-circle me-2"></i>
+              <strong>Sistem CRUD Aktif!</strong> Anda dapat mengelola data aset sesuai dengan struktur tabel database.
+            </div>
+            <a href="{{ url_for('main.manajemen_aset') }}" class="btn btn-lg btn-danger me-3">
+              <i class="fas fa-cogs me-2"></i>Halaman Manajemen Lengkap
+            </a>
+            <a href="{{ url_for('main.total_properti') }}" class="btn btn-lg btn-outline-danger">
+              <i class="fas fa-database me-2"></i>Lihat Semua Data
+            </a>
+          </div>
+        </div>
       </section>
       <!-- Notifikasi -->
       <section id="notifikasi" class="content-section">
-        <h1>Notifikasi</h1>
+        <div class="p-4">
+          <h1 class="fw-bold mb-3">Notifikasi</h1>
+          <p class="text-muted mb-4">Sistem notifikasi dan peringatan</p>
+          
+          <div class="text-center">
+            <div class="card shadow-sm border-0">
+              <div class="card-body py-5">
+                <i class="fas fa-bell text-muted mb-3" style="font-size: 4rem;"></i>
+                <h4 class="text-muted">Fitur Dalam Pengembangan</h4>
+                <p class="text-muted">Sistem notifikasi akan segera tersedia</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
     </main>
   </div>

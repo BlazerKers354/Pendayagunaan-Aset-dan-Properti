@@ -19,7 +19,16 @@
       rel="stylesheet"
       href="{{ url_for('static', filename='css/dashAdmin.css') }}"
     />
+    
+    <!-- Telkom Color Scheme -->
     <style>
+      :root {
+        --telkom-red: #dc3545;
+        --telkom-dark:rgb(0, 0, 0);
+        --telkom-light: #f8d7da;
+        --telkom-white: #ffffff;
+      }
+      
       body {
         font-family: "Poppins", sans-serif;
         background: url("{{ url_for("static", filename="img/bglogin.jpg") }}")
@@ -36,39 +45,48 @@
         left: 0;
         width: 100%;
         height: 100%;
-        background: rgba(0, 0, 0, 0.5);
+        background: rgba(220, 53, 69, 0.1); /* Telkom red overlay */
         z-index: 1;
       }
       .hero-box {
         position: relative;
         z-index: 2;
-        background: var(--color-white);
+        background: var(--telkom-white);
         padding: 3rem 2rem;
-        border-radius: var(--card-border-radius);
-        box-shadow: var(--box-shadow);
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(220, 53, 69, 0.2);
         text-align: center;
         max-width: 450px;
         width: 100%;
+        border: 2px solid var(--telkom-light);
       }
       .hero-box h1 {
         font-size: 1.8rem;
         font-weight: 700;
         margin-bottom: 1rem;
+        color: var(--telkom-dark);
       }
       .hero-box p {
         margin-bottom: 2rem;
-        color: var(--color-dark-variant);
+        color: #6c757d;
       }
       .hero-box .btn-main {
-        background: var(--color-danger); /* Gunakan merah Telkom */
-        color: #fff;
+        background: var(--telkom-red);
+        color: var(--telkom-white);
         padding: 0.8rem 2rem;
-        border-radius: var(--border-radius-1);
+        border-radius: 10px;
         text-decoration: none;
         transition: all 0.3s ease;
+        display: inline-block;
+        font-weight: 600;
+        border: 2px solid var(--telkom-red);
       }
       .hero-box .btn-main:hover {
-        background: var(--color-primary); /* Hover biru Telkom */
+        background: var(--telkom-dark);
+        border-color: var(--telkom-dark);
+        color: var(--telkom-white);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(220, 53, 69, 0.3);
       }
       .logo {
         display: flex;
@@ -83,6 +101,10 @@
       }
       .logo h2 {
         font-weight: 700;
+        color: var(--telkom-dark);
+      }
+      .logo h2 .danger {
+        color: var(--telkom-red);
       }
     </style>
   </head>
