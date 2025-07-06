@@ -900,9 +900,9 @@ document.getElementById('rentTanahForm').addEventListener('submit', function(e) 
             <div class="result-value">Rp ${monthlyRent.toLocaleString('id-ID')}</div>
         </div>
         <div class="result-card bg-gradient-danger text-white border-0">
-            <div class="result-label text-white">Total Biaya Sewa</div>
-            <div class="result-value text-white">Rp ${totalRent.toLocaleString('id-ID')}</div>
-            <small class="text-white-50">${duration} ${durationUnit === 'years' ? 'tahun' : 'bulan'} (${durationInMonths} bulan)</small>
+            <div class="result-label">Total Biaya Sewa</div>
+            <div class="result-value">Rp ${totalRent.toLocaleString('id-ID')}</div>
+            <small class="text-black-50">${duration} ${durationUnit === 'years' ? 'tahun' : 'bulan'} (${durationInMonths} bulan)</small>
         </div>
     `;
 });
