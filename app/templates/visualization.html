@@ -1,0 +1,565 @@
+{% extends "layout.html" %}
+
+{% block title %}Visualisasi Harga - Pendayagunaan Aset{% endblock %}
+
+{% block content %}
+<!-- Navigation-->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top" id="mainNav">
+    <div class="container px-4">
+        <a class="navbar-brand" href="{{ url_for('main.user_dashboard') }}">Pendayagunaan Aset</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarResponsive">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('main.user_dashboard') }}">Dashboard</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('main.data') }}">Data Aset</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('main.prediksi_tanah') }}">Prediksi Tanah</a></li>
+                <li class="nav-item">
+                    <a class="nav-link text-warning" href="{{ url_for('main.logout_user') }}">
+                        <i class="fas fa-sign-out-alt me-1"></i>Logout
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- Header-->
+<header class="bg-gradient-danger text-white" style="padding-top: 7rem; background: linear-gradient(135deg, #DC143C 0%, #8B0000 100%);">
+    <div class="container px-4 text-center">
+        <h1 class="fw-bolder">Visualisasi Harga Aset</h1>
+        <p class="lead">Analisis trend dan perbandingan harga properti</p>
+    </div>
+</header>
+
+<!-- Statistics Cards -->
+<section class="py-5">
+    <div class="container px-4">
+        <div class="row g-4 mb-5">
+            <div class="col-md-3 col-sm-6">
+                <div class="card text-center shadow-sm border-0 h-100">
+                    <div class="card-body">
+                        <div class="display-6 text-danger mb-2">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <h4 class="card-title text-success" id="avgPrice">Rp 0</h4>
+                        <p class="card-text text-muted">Harga Rata-rata per m²</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <div class="card text-center shadow-sm border-0 h-100">
+                    <div class="card-body">
+                        <div class="display-6 text-info mb-2">
+                            <i class="fas fa-arrow-up"></i>
+                        </div>
+                        <h4 class="card-title text-danger" id="maxPrice">Rp 0</h4>
+                        <p class="card-text text-muted">Harga Tertinggi</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <div class="card text-center shadow-sm border-0 h-100">
+                    <div class="card-body">
+                        <div class="display-6 text-warning mb-2">
+                            <i class="fas fa-arrow-down"></i>
+                        </div>
+                        <h4 class="card-title text-success" id="minPrice">Rp 0</h4>
+                        <p class="card-text text-muted">Harga Terendah</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <div class="card text-center shadow-sm border-0 h-100">
+                    <div class="card-body">
+                        <div class="display-6 text-secondary mb-2">
+                            <i class="fas fa-home"></i>
+                        </div>
+                        <h4 class="card-title text-danger" id="totalAssets">0</h4>
+                        <p class="card-text text-muted">Total Aset</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chart Controls -->
+        <div class="row justify-content-center mb-4">
+            <div class="col-lg-8">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0"><i class="fas fa-sliders-h me-2"></i>Filter Visualisasi</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label for="chartType" class="form-label">Jenis Chart</label>
+                                <select class="form-select" id="chartType">
+                                    <option value="bar">Bar Chart</option>
+                                    <option value="line">Line Chart</option>
+                                    <option value="pie">Pie Chart</option>
+                                    <option value="doughnut">Doughnut Chart</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="groupBy" class="form-label">Kelompokkan Berdasarkan</label>
+                                <select class="form-select" id="groupBy">
+                                    <option value="location">Lokasi</option>
+                                    <option value="type">Jenis Aset</option>
+                                    <option value="transaction">Jenis Transaksi</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="metric" class="form-label">Metrik</label>
+                                <select class="form-select" id="metric">
+                                    <option value="avgPrice">Harga Rata-rata</option>
+                                    <option value="totalValue">Total Nilai</option>
+                                    <option value="count">Jumlah Aset</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-12 text-center">
+                                <button class="btn btn-danger" id="updateChart">
+                                    <i class="fas fa-sync-alt me-1"></i>Update Visualisasi
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Chart -->
+        <div class="row justify-content-center mb-5">
+            <div class="col-lg-10">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0" id="chartTitle">Visualisasi Harga Aset</h5>
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-outline-danger btn-sm" id="downloadChart">
+                                <i class="fas fa-download me-1"></i>Download
+                            </button>
+                            <button type="button" class="btn btn-outline-danger btn-sm" id="fullscreenChart">
+                                <i class="fas fa-expand me-1"></i>Fullscreen
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container" style="position: relative; height: 400px;">
+                            <canvas id="mainChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Secondary Charts -->
+        <div class="row g-4 mb-5">
+            <div class="col-lg-6">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-header">
+                        <h5 class="mb-0">Distribusi Harga per Lokasi</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container" style="position: relative; height: 300px;">
+                            <canvas id="locationChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-header">
+                        <h5 class="mb-0">Perbandingan Jenis Aset</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container" style="position: relative; height: 300px;">
+                            <canvas id="typeChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Table -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Detail Data Harga</h5>
+                        <button class="btn btn-outline-danger btn-sm" id="exportData">
+                            <i class="fas fa-file-excel me-1"></i>Export Excel
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="dataTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Nama Aset</th>
+                                        <th>Lokasi</th>
+                                        <th>Jenis</th>
+                                        <th>Luas (m²)</th>
+                                        <th>Harga per m²</th>
+                                        <th>Total Nilai</th>
+                                        <th>Transaksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="dataTableBody">
+                                    <!-- Data will be populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Footer-->
+<footer class="py-5 bg-dark">
+    <div class="container px-4">
+        <p class="m-0 text-center text-white">Copyright &copy; Sistem Pendayagunaan Aset 2025 - {{ session.get('user_name', 'Pengguna') }}</p>
+    </div>
+</footer>
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let mainChart, locationChart, typeChart;
+    let currentData = [];
+    let statistics = {};
+
+    // Initialize page
+    loadStatistics();
+    loadVisualizationData();
+
+    // Event listeners
+    document.getElementById('updateChart').addEventListener('click', updateMainChart);
+    document.getElementById('downloadChart').addEventListener('click', downloadChart);
+    document.getElementById('exportData').addEventListener('click', exportData);
+
+    async function loadStatistics() {
+        try {
+            const response = await fetch('/api/statistics');
+            statistics = await response.json();
+            
+            if (statistics.error) {
+                throw new Error(statistics.error);
+            }
+
+            updateStatisticsCards();
+        } catch (error) {
+            console.error('Error loading statistics:', error);
+            // Use fallback data
+            statistics = {
+                total_properties: 0,
+                avg_price: 0,
+                min_price: 0,
+                max_price: 0,
+                location_prices: {}
+            };
+        }
+    }
+
+    async function loadVisualizationData() {
+        try {
+            const response = await fetch('/api/properties?per_page=1000');
+            const data = await response.json();
+            
+            if (data.error) {
+                throw new Error(data.error);
+            }
+
+            currentData = data.properties;
+            populateDataTable();
+            initializeCharts();
+        } catch (error) {
+            console.error('Error loading visualization data:', error);
+            currentData = [];
+        }
+    }
+
+    function updateStatisticsCards() {
+        document.getElementById('avgPrice').textContent = `Rp ${statistics.avg_price?.toLocaleString() || '0'}`;
+        document.getElementById('maxPrice').textContent = `Rp ${statistics.max_price?.toLocaleString() || '0'}`;
+        document.getElementById('minPrice').textContent = `Rp ${statistics.min_price?.toLocaleString() || '0'}`;
+        document.getElementById('totalAssets').textContent = statistics.total_properties || '0';
+    }
+
+    function populateDataTable() {
+        const tbody = document.getElementById('dataTableBody');
+        tbody.innerHTML = '';
+
+        // Show first 50 items for performance
+        const displayData = currentData.slice(0, 50);
+
+        displayData.forEach(item => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${item.title}</td>
+                <td>${item.location}</td>
+                <td>Rumah</td>
+                <td>${item.land_area.toLocaleString()}</td>
+                <td>Rp ${item.price_per_m2.toLocaleString()}</td>
+                <td>Rp ${item.price.toLocaleString()}</td>
+                <td><span class="badge bg-success">Jual</span></td>
+            `;
+            tbody.appendChild(row);
+        });
+    }
+
+    function initializeCharts() {
+        // Main chart - Price by location
+        const mainCtx = document.getElementById('mainChart').getContext('2d');
+        mainChart = new Chart(mainCtx, {
+            type: 'bar',
+            data: getChartData('location', 'avgPrice'),
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Harga Rata-rata per Kecamatan'
+                    },
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return 'Rp ' + (value / 1000000).toFixed(0) + 'M';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Location distribution chart
+        const locationCtx = document.getElementById('locationChart').getContext('2d');
+        locationChart = new Chart(locationCtx, {
+            type: 'doughnut',
+            data: getChartData('location', 'count'),
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    },
+                    title: {
+                        display: true,
+                        text: 'Distribusi Properti per Kecamatan'
+                    }
+                }
+            }
+        });
+
+        // Condition chart  
+        const typeCtx = document.getElementById('typeChart').getContext('2d');
+        typeChart = new Chart(typeCtx, {
+            type: 'pie',
+            data: getConditionChartData(),
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    },
+                    title: {
+                        display: true,
+                        text: 'Distribusi Kondisi Properti'
+                    }
+                }
+            }
+        });
+    }
+
+    function getChartData(groupBy, metric) {
+        if (currentData.length === 0) {
+            return { labels: [], datasets: [{ data: [], backgroundColor: [], borderColor: [], borderWidth: 1 }] };
+        }
+
+        const grouped = {};
+        
+        currentData.forEach(item => {
+            const key = groupBy === 'location' ? item.location : item.condition;
+            if (!grouped[key]) {
+                grouped[key] = { items: [], total: 0, count: 0 };
+            }
+            grouped[key].items.push(item);
+            grouped[key].total += item.price;
+            grouped[key].count++;
+        });
+
+        const labels = Object.keys(grouped).sort();
+        let data;
+
+        switch(metric) {
+            case 'avgPrice':
+                data = labels.map(label => Math.round(grouped[label].total / grouped[label].count));
+                break;
+            case 'totalValue':
+                data = labels.map(label => 
+                    grouped[label].items.reduce((sum, item) => sum + item.price, 0)
+                );
+                break;
+            case 'count':
+                data = labels.map(label => grouped[label].count);
+                break;
+            default:
+                data = labels.map(label => grouped[label].count);
+        }
+
+        // Color palette
+        const colors = [
+            '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0',
+            '#9966FF', '#FF9F40', '#FF6384', '#C9CBCF',
+            '#4BC0C0', '#9966FF', '#FF9F40', '#36A2EB'
+        ];
+
+        return {
+            labels: labels,
+            datasets: [{
+                data: data,
+                backgroundColor: colors.slice(0, labels.length),
+                borderColor: colors.slice(0, labels.length),
+                borderWidth: 1
+            }]
+        };
+    }
+
+    function getConditionChartData() {
+        if (currentData.length === 0) {
+            return { labels: [], datasets: [{ data: [], backgroundColor: [], borderColor: [], borderWidth: 1 }] };
+        }
+
+        const conditionCounts = {};
+        
+        currentData.forEach(item => {
+            const condition = item.condition || 'N/A';
+            conditionCounts[condition] = (conditionCounts[condition] || 0) + 1;
+        });
+
+        const labels = Object.keys(conditionCounts).sort();
+        const data = labels.map(label => conditionCounts[label]);
+
+        const colors = ['#28a745', '#007bff', '#ffc107', '#6c757d'];
+
+        return {
+            labels: labels,
+            datasets: [{
+                data: data,
+                backgroundColor: colors.slice(0, labels.length),
+                borderColor: colors.slice(0, labels.length),
+                borderWidth: 1
+            }]
+        };
+    }
+
+    function updateMainChart() {
+        const chartType = document.getElementById('chartType').value;
+        const groupBy = document.getElementById('groupBy').value;
+        const metric = document.getElementById('metric').value;
+
+        // Update chart type
+        mainChart.destroy();
+        const ctx = document.getElementById('mainChart').getContext('2d');
+        
+        const chartData = getChartData(groupBy, metric);
+        let chartTitle = '';
+
+        const groupByText = groupBy === 'location' ? 'Kecamatan' : groupBy === 'type' ? 'Jenis Aset' : 'Kondisi Properti';
+        
+        switch(metric) {
+            case 'avgPrice':
+                chartTitle = `Harga Rata-rata per ${groupByText}`;
+                break;
+            case 'totalValue':
+                chartTitle = `Total Nilai per ${groupByText}`;
+                break;
+            case 'count':
+                chartTitle = `Jumlah Properti per ${groupByText}`;
+                break;
+        }
+
+        document.getElementById('chartTitle').textContent = chartTitle;
+
+        mainChart = new Chart(ctx, {
+            type: chartType,
+            data: chartData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: chartTitle
+                    },
+                    legend: {
+                        display: chartType === 'pie' || chartType === 'doughnut',
+                        position: 'bottom'
+                    }
+                },
+                scales: chartType === 'pie' || chartType === 'doughnut' ? {} : {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                if (metric === 'count') {
+                                    return value;
+                                }
+                                return 'Rp ' + (value / 1000000).toFixed(0) + 'M';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function downloadChart() {
+        const link = document.createElement('a');
+        link.download = 'chart.png';
+        link.href = mainChart.toBase64Image();
+        link.click();
+    }
+
+    function exportData() {
+        // Simple CSV export
+        const headers = ['Nama Properti', 'Kecamatan', 'Jenis', 'Luas Tanah (m²)', 'Luas Bangunan (m²)', 'Harga Total', 'Harga per m²', 'Kondisi'];
+        const csvContent = [
+            headers.join(','),
+            ...currentData.slice(0, 1000).map(item => [
+                `"${item.title}"`,
+                item.location,
+                '"Rumah"',
+                item.land_area,
+                item.building_area,
+                item.price,
+                item.price_per_m2,
+                `"${item.condition}"`
+            ].join(','))
+        ].join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'data-properti-surabaya.csv';
+        link.click();
+        window.URL.revokeObjectURL(url);
+    }
+});
+</script>
+{% endblock %}

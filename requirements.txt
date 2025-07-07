@@ -1,0 +1,9 @@
+Flask
+Werkzeug
+Flask-WTF
+WTForms
+python-dotenv
+pandas
+numpy
+PyMySQL
+mysql-connector-python
